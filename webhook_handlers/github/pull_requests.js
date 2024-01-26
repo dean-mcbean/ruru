@@ -161,7 +161,8 @@ const handlePullRequestEvent = async (data) => {
         // Create message
         const result = await sendMessage({
             channel: process.env.DEV_CHAT_CHANNELID, 
-            blocks: await generateMessageContentForPullRequest(data)
+            blocks: await generateMessageContentForPullRequest(data),
+            text: `New PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
         })
         messageInfoByPR[data.pull_request.id] = {
             channel: result.channel,
@@ -173,7 +174,8 @@ const handlePullRequestEvent = async (data) => {
         if (messageInfo) {
             const result = await updateMessage({
                 ...messageInfo,
-                blocks: await generateMessageContentForPullRequest(data)
+                blocks: await generateMessageContentForPullRequest(data),
+                text: `Updated PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
             })
         }
     }

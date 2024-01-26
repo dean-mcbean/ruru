@@ -30,7 +30,8 @@ const addReviewerToPullRequest = async (action, data) => {
     const result = await updateMessage({
         channel: channel_id,
         ts: message_ts,
-        blocks: pr_status.message_blocks
+        blocks: pr_status.message_blocks,
+        text: `Under Review by ${data.user.name}`
     })
 
     // Save new message
