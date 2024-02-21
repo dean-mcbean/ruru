@@ -27,7 +27,7 @@ const addReviewerToPullRequest = async (action, data) => {
     pr_status.message_blocks[1].elements[0].text = split_context.join('|');
 
     // Update message in slack
-    const result = await updateMessage({
+    await updateMessage({
         channel: channel_id,
         ts: message_ts,
         blocks: pr_status.message_blocks,
