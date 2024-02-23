@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
+const updateHomeForDevs = require('./slack_usecases/updateHomeForDevs');
 
 var app = express();
 
@@ -22,6 +23,7 @@ app.use(function(req, res, next) {
 });
 
 // error handler
+// eslint-disable-next-line no-unused-vars
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
@@ -31,5 +33,13 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+function initApp() {
+  // Initialize the app
+  // eslint-disable-next-line no-console
+  console.log('Initializing the app');
+  updateHomeForDevs()
+}
+initApp()
 
 module.exports = app;

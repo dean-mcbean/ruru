@@ -19,7 +19,7 @@ function generateDescription(data) {
 
 async function generateMessageContentForPullRequest(data) {
   // Fetch info on this PR's status
-  const persistent_pr_status = await usePersistentItem('pr_status', data.pull_request.id);
+  const persistent_pr_status = await usePersistentItem('pull_requests', 'pr_status', data.pull_request.id);
 
 
   const creator = data.pull_request.user.login;
@@ -40,6 +40,7 @@ async function generateMessageContentForPullRequest(data) {
 
   // Determine Status and Action summary
   const readable_action = data.action.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+  console.log(persistent_pr_status.value)
   let status_emoji = persistent_pr_status.value.status_emoji;
   let action_summary = persistent_pr_status.value.action_summary; // By default, leave it at whatever it was last
   if (data.pull_request.merged_at) {
@@ -68,18 +69,18 @@ async function generateMessageContentForPullRequest(data) {
       status_emoji = ':thumbsdown:';
   }
   // Save to persistent memory
-  persistent_pr_status.set('status_emoji', status_emoji);
-  persistent_pr_status.set('action_summary', action_summary);
+  await persistent_pr_status.set('status_emoji', status_emoji);
+  await persistent_pr_status.set('action_summary', action_summary);
   
 
   //Description
   var description = persistent_pr_status.value.description ?? generateDescription(data);
   if (data.pull_request.body) description = data.pull_request.body
-  persistent_pr_status.value.description = description; // I save this before closed on purpose, to keep the description in case it reopens
+  await persistent_pr_status.set('description', description); // I save this before closed on purpose, to keep the description in case it reopens
   if (data.action == 'closed') description = ''
 
   
-  persistent_pr_status.set('title', data.pull_request.title);
+  await persistent_pr_status.set('title', data.pull_request.title);
 
 
   let button = undefined;
@@ -88,7 +89,7 @@ async function generateMessageContentForPullRequest(data) {
           text: ':eyes: Review Pull Request',
           value: `${data.pull_request.id}`,
           url: data.pull_request.html_url + '/files',
-          actionId: 'pull_request.add_reviewer'
+          action_id: 'pull_request.add_reviewer'
       })
   }
 
@@ -113,7 +114,7 @@ ${description}`,
   }
 
   // Save Presistent PR Status
-  persistent_pr_status.set('message_blocks', bmb.build());
+  await persistent_pr_status.set('message_blocks', bmb.build());
   return bmb.build();
 }
 

@@ -1,16 +1,22 @@
 const NodePersist = require("node-persist");
 
+const folderListeners = {};
+
+let isSaving = false;
+
 /**
  * Represents a persistent item that can be stored and retrieved using NodePersist.
  */
 class PersistentItem {
   /**
    * Creates a new PersistentItem instance.
+   * @param {string} folder - The folder used to store the item.
    * @param {any} item - The item to be stored.
    * @param {string} key - The key used to identify the item in storage.
    * @param {string|null} secondary_key - The optional secondary key used to access nested properties of the item.
    */
-  constructor(item, key, secondary_key = null) {
+  constructor(folder, item, key, secondary_key = null) {
+    this.folder = folder;
     this.item = item;
     this.key = key;
     this.secondary_key = secondary_key;
@@ -36,20 +42,30 @@ class PersistentItem {
    */
   async set(...params) {
     let newItem = params[params.length - 1];
-    let keys = params.slice(0, -1);
 
-    if (this.secondary_key) {
-      let current = this.item[this.secondary_key];
-      for (let key of keys) {
-        current = current[key];
+    if (params.length === 1) {
+      if (this.secondary_key) {
+        this.item[this.secondary_key] = newItem;
+      } else {
+        this.item = newItem;
       }
-      current = newItem;
+
     } else {
+      let keys = params.slice(0, -1);
+
       let current = this.item;
-      for (let key of keys) {
+      if (this.secondary_key) {
+        current = this.item[this.secondary_key];
+      }
+
+      for (let key of keys.slice(0, -1)) {
+        if (current[key] === undefined) {
+          current[key] = {};
+        }
         current = current[key];
       }
-      current = newItem;
+      current[keys[keys.length - 1]] = newItem;
+
     }
     await this.save();
   }
@@ -59,7 +75,34 @@ class PersistentItem {
    * @returns {Promise<void>} A promise that resolves when the item is successfully saved.
    */
   async save() {
-    await NodePersist.setItem(this.key, this.item);
+    if (isSaving) {
+      // If already saving, wait for the previous save operation to complete
+      await new Promise(resolve => {
+        const interval = setInterval(() => {
+          if (!isSaving) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 10);
+      });
+    }
+
+    isSaving = true; // Acquire the lock
+
+    try {
+      await NodePersist.init({ dir: `./storage/${this.folder}` });
+      console.log(this.key, this.item);
+      await NodePersist.setItem(this.key, JSON.stringify(this.item));
+
+      // Run Listeners
+      if (folderListeners[this.folder]) {
+        for (let listener of folderListeners[this.folder]) {
+          listener();
+        }
+      }
+    } finally {
+      isSaving = false; // Release the lock
+    }
   }
 
   /**
@@ -76,6 +119,10 @@ class PersistentItem {
     }
     await this.save();
   }
+
+  get hasData() {
+    return this.item !== undefined && this.item !== null && Object.keys(this.item).length > 0;
+  }
 }
 
 /**
@@ -84,11 +131,31 @@ class PersistentItem {
  * @param {string|null} secondary_key - The optional secondary key used to access nested properties of the item.
  * @returns {Promise<PersistentItem>} A promise that resolves with a PersistentItem instance.
  */
-async function usePersistentItem(key, secondary_key = null) {
-  const item = await NodePersist.getItem(key);
-  return new PersistentItem(item, key, secondary_key);
+async function usePersistentItem(folder, key, secondary_key = null) {
+  await NodePersist.init({ dir: `./storage/${folder}` });
+  console.log(folder, key, secondary_key)
+  let item = await NodePersist.getItem(key);
+  if (item === null || item === undefined) { 
+    await NodePersist.setItem(key, JSON.stringify({}));
+    item = {};
+  } else {
+    item = JSON.parse(item);
+  }
+  if (!(secondary_key === null || secondary_key === undefined) && item[secondary_key] === undefined) {
+    await NodePersist.setItem(key, JSON.stringify({ [secondary_key]: {} }));
+    item = { [secondary_key]: {} };
+  }
+  return new PersistentItem(folder, item, key, secondary_key);
+}
+
+function createStorageListener(folder, listener) {
+  if (!folderListeners[folder]) {
+    folderListeners[folder] = [];
+  }
+  folderListeners[folder].push(listener);
 }
 
 module.exports = {
-  usePersistentItem
+  usePersistentItem,
+  createStorageListener
 };

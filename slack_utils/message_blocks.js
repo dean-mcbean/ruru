@@ -34,7 +34,7 @@ function createContextBlock({text}) {
   };
 }
 
-function createButtonBlock({text, actionId, value, url = undefined}) {
+function createButtonBlock({text, action_id, value, url = undefined}) {
   return {
     type: 'button',
     text: {
@@ -42,15 +42,41 @@ function createButtonBlock({text, actionId, value, url = undefined}) {
       text,
       emoji: true
     },
-    action_id: actionId,
+    action_id,
     value,
     url
   };
 }
 
+function createHeaderBlock({text}) {
+  return {
+    type: 'header',
+    text: {
+      type: 'plain_text',
+      text,
+      emoji: true
+    }
+  };
+}
+
+function createOverflowBlock({action_id, options}) {
+  return {
+    type: 'overflow',
+    action_id,
+    options
+  };
+}
+
+function createActionsBlock({elements}) {
+  return {
+    type: 'actions',
+    elements
+  };
+}
+
 class BlockMessageBuilder {
-  constructor() {
-    this.blocks = [];
+  constructor(blocks = []) {
+    this.blocks = blocks;
   }
 
   addSection({text, accessory = undefined}) {
@@ -60,6 +86,13 @@ class BlockMessageBuilder {
 
   addDivider() {
     this.blocks.push(createDividerBlock());
+    return this;
+  }
+
+  addPadding({padding = 1}) {
+    for (let i = 0; i < padding; i++) {
+      this.blocks.push(createSectionBlock({text: ' '}));
+    }
     return this;
   }
 
@@ -73,8 +106,25 @@ class BlockMessageBuilder {
     return this;
   }
 
-  addButton({text, actionId, value, url = undefined}) {
-    this.blocks.push(createButtonBlock({text, actionId, value, url}));
+  addActions({elements}) {
+    this.blocks.push(createActionsBlock({elements}));
+    return this;
+  }    
+
+  addButton({text, action_id, value, url = undefined}) {
+    this.blocks.push(createActionsBlock({
+      elements: [createButtonBlock({text, action_id, value, url})]
+    }));
+    return this;
+  }
+
+  addHeader({text}) {
+    this.blocks.push(createHeaderBlock({text}));
+    return this;
+  }
+
+  addOverflow({action_id, options}) {
+    this.blocks.push(createOverflowBlock({action_id, options}));
     return this;
   }
 
@@ -86,6 +136,10 @@ class BlockMessageBuilder {
   build() {
     return this.blocks;
   }
+
+  copy() {
+    return new BlockMessageBuilder(this.blocks.slice());
+  }
 }
 
 module.exports = {
@@ -94,5 +148,7 @@ module.exports = {
   createImageBlock,
   createContextBlock,
   createButtonBlock,
+  createHeaderBlock,
+  createOverflowBlock,
   BlockMessageBuilder
 };
