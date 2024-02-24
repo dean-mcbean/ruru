@@ -8,10 +8,12 @@ const { usePersistentItem } = require('../../storage_utils/persistent_item');
 const handlePullRequestEvent = async (data) => {
     // fetch persistent storage
     const messageInfo = await usePersistentItem('pull_requests', 'messages', data.pull_request.id);
+    const messageInfoValue = await messageInfo.get();
+    const messageHasData = await messageInfo.hasData();
 
     // React to Pull Request notification type
-    console.log(data.action, messageInfo.hasData, messageInfo.value)
-    if (['opened', 'reopened'].includes(data.action) || !messageInfo.hasData) {
+    console.log(data.action, messageHasData, messageInfoValue)
+    if (['opened', 'reopened'].includes(data.action) || !messageHasData) {
         // Create message
         const result = await sendMessage({
             channel: process.env.DEV_CHAT_CHANNELID, 
@@ -24,9 +26,9 @@ const handlePullRequestEvent = async (data) => {
         });
     } else {
         // Edit PR message to reflect any changes
-        if (messageInfo.value) {
+        if (messageHasData) {
             await updateMessage({
-                ...messageInfo.value,
+                ...messageInfoValue,
                 blocks: await generateMessageContentForPullRequest(data),
                 text: `Updated PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
             })

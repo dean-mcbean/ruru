@@ -1,4 +1,8 @@
 
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 function createSectionBlock({text, accessory = undefined}) {
   return {
     type: 'section',
@@ -74,6 +78,50 @@ function createActionsBlock({elements}) {
   };
 }
 
+function createStaticSelectElement({action_id, textByValue, placeholder = 'Select an option', initial_value = undefined}) {
+  const options = Object.keys(textByValue).map(value => {
+    return {
+      text: createPlainTextElement({text: textByValue[value]}),
+      value
+    };
+  });
+  return {
+      type: 'static_select',
+      action_id,
+      options,
+      placeholder: createPlainTextElement({text: placeholder}),
+      initial_option: initial_value ? {
+        text: createPlainTextElement({text: textByValue[initial_value]}),
+        value: initial_value
+      } : undefined
+  };
+}
+
+function createPlainTextElement({text, emoji = true}) {
+  return {
+    type: 'plain_text',
+    text,
+    emoji
+  };
+}
+
+function createTextInputElement({action_id, placeholder, initial_value = undefined}) {
+  return {
+    type: 'plain_text_input',
+    action_id,
+    placeholder: createPlainTextElement({text: placeholder}),
+    initial_value
+  };
+}
+
+function createInputBlock({label, element}) {
+  return {
+    type: 'input',
+    label: createPlainTextElement({text: label}),
+    element
+  };
+}
+
 class BlockMessageBuilder {
   constructor(blocks = []) {
     this.blocks = blocks;
@@ -128,6 +176,18 @@ class BlockMessageBuilder {
     return this;
   }
 
+  addInput({label, element}) {
+    this.blocks.push(createInputBlock({label, element}));
+    return this;
+  }
+
+  addTextInput({label, action_id, placeholder, initial_value = undefined}) {
+    return this.addInput({
+      label,
+      element: createTextInputElement({action_id, placeholder, initial_value})
+    });
+  }
+
   clear() {
     this.blocks = [];
     return this;
@@ -143,12 +203,20 @@ class BlockMessageBuilder {
 }
 
 module.exports = {
+  capitalize,
+
   createSectionBlock,
   createDividerBlock,
   createImageBlock,
   createContextBlock,
   createButtonBlock,
   createHeaderBlock,
+  createActionsBlock,
   createOverflowBlock,
+
+  createStaticSelectElement,
+  createPlainTextElement,
+  createTextInputElement,
+
   BlockMessageBuilder
 };

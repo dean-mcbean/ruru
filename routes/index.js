@@ -1,9 +1,7 @@
 var express = require('express');
 const handlePullRequestEvent = require('../webhook_handlers/github/pull_requests');
-const { addReviewerToPullRequest } = require('../webhook_handlers/slack/pull_requests');
 const { handleWorkflowRunEvent, handleWorkflowBotPushEvent } = require('../webhook_handlers/github/workflow_runs');
-const { requestRunWorkflow, runWorkflow } = require('../webhook_handlers/slack/run_workflow');
-const { backToDefault } = require('../webhook_handlers/slack/back_to_default');
+const { handleAction } = require('../webhook_handlers/slack/action_handler');
 var router = express.Router();
 
 /* POST from git. */
@@ -37,32 +35,17 @@ router.post('/slack/', async (req, res, next) => {
 
   // Pass actions to relevant webhook handler
   console.log(data);
-  data.actions.forEach(action => {
-    switch (action.action_id) { 
-
-      case 'back_to_default':
-        backToDefault(action, data);
-        res.status(200);
-        break;
-
-      // PULL REQUESTS
-      case 'pull_request.add_reviewer': 
-        addReviewerToPullRequest(action, data); 
-        res.status(200);
-        break;
-
-      // WORKFLOW RUNS
-      case 'request_run_workflow':
-        requestRunWorkflow(action, data);
-        res.status(200);
-        break;
-      case 'run_workflow':
-        runWorkflow(action, data);
-        res.status(200);
-        break;
+  for (const action of data.actions) {
+    const result = await handleAction(action.action_id, action, data)
+    console.log("RES", result)
+    if (typeof result === 'object') {
+      res.status(402).send(result);
+    } else if (result) {
+      res.status(200);
+    } else {
+      res.status(401);
     }
-  })
-  
+  }
   res.send();
 });
 

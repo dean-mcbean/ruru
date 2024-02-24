@@ -1,161 +1,159 @@
-const NodePersist = require("node-persist");
+const { MongoClient } = require("mongodb");
 
-const folderListeners = {};
+const client = new MongoClient(process.env.MONGO_CONNECTION_STRING, { useNewUrlParser: true, useUnifiedTopology: true });
+const ruruDB = client.db("ruru");
 
-let isSaving = false;
+const collectionListeners = {};
 
 /**
- * Represents a persistent item that can be stored and retrieved using NodePersist.
+ * Represents a persistent item that can be stored and retrieved using MongoDB.
  */
 class PersistentItem {
   /**
    * Creates a new PersistentItem instance.
-   * @param {string} folder - The folder used to store the item.
-   * @param {any} item - The item to be stored.
-   * @param {string} key - The key used to identify the item in storage.
-   * @param {string|null} secondary_key - The optional secondary key used to access nested properties of the item.
+   * @param {string} collection_id - The ID of the collection used to store the item.
+   * @param {string} document_id - The ID of the document to be retrieved from the collection.
    */
-  constructor(folder, item, key, secondary_key = null) {
-    this.folder = folder;
-    this.item = item;
-    this.key = key;
-    this.secondary_key = secondary_key;
+  constructor(collection_id, document_id, keys) {
+    this.collection_id = collection_id;
+    this.collection = ruruDB.collection(collection_id);
+    this.document_id = document_id;
+    this.document = null;
+    this.keys = keys;
+  }
+
+  async updateDocument() {
+    try {
+      this.document = await this.collection.findOne({ _id: this.document_id });
+      
+      if (this.document === null) {
+        this.document = {};
+        await this.collection.insertOne({ _id: this.document_id, ...this.document });
+      }
+    } catch (error) {
+      console.error("Error retrieving document:", error);
+    }
   }
 
   /**
    * Gets the value of the persistent item.
-   * If a secondary key is provided, it returns the value of the nested property specified by the secondary key.
-   * @returns {any} The value of the persistent item.
+   * @returns {Promise<any>} A promise that resolves with the value of the persistent item.
    */
-  get value() {
-    if (this.secondary_key) {
-      return this.item[this.secondary_key];
+  async get(...params) {
+    await this.updateDocument();
+    let result = this.document;
+    for (let key of this.keys) {
+      if (result === undefined || result === null || typeof result !== 'object') {
+        return undefined;
+      }
+      result = result[key];
     }
-    return this.item;
+    for (let param of params) {
+      if (result === undefined || result === null || typeof result !== 'object') {
+        return undefined;
+      }
+      result = result[param];
+    }
+    return result;
   }
 
   /**
    * Sets the value of the persistent item.
-   * If a secondary key is provided, it sets the value of the nested property specified by the secondary key.
    * @param {...string} params - The keys to access the nested property (if applicable) and the new value to be set.
    * @returns {Promise<void>} A promise that resolves when the item is successfully saved.
    */
   async set(...params) {
-    let newItem = params[params.length - 1];
-
-    if (params.length === 1) {
-      if (this.secondary_key) {
-        this.item[this.secondary_key] = newItem;
-      } else {
-        this.item = newItem;
+    console.log(params)
+    const newItem = params.pop();
+    const mykeys = [...this.keys];
+    const keys = params.slice(0, -1);
+    let lastKey = params.pop();
+    if (lastKey === undefined) {
+      lastKey = mykeys.pop();
+    }
+    console.log(mykeys, keys, lastKey, newItem)
+    
+    await this.updateDocument();
+    let document = this.document;
+    for (let key of mykeys) {
+      console.log(key, document)
+      if (document[key] === undefined || document[key] === null || typeof document[key] !== 'object') {
+        document[key] = {};
       }
-
+      document = document[key];
+    }
+    for (let key of keys) {
+      console.log('a', key, document)
+      if (document[key] === undefined || document[key] === null || typeof document[key] !== 'object') {
+        document[key] = {};
+      }
+      document = document[key];
+    }
+    if (lastKey !== undefined) {
+      document[lastKey] = newItem;
     } else {
-      let keys = params.slice(0, -1);
-
-      let current = this.item;
-      if (this.secondary_key) {
-        current = this.item[this.secondary_key];
-      }
-
-      for (let key of keys.slice(0, -1)) {
-        if (current[key] === undefined) {
-          current[key] = {};
-        }
-        current = current[key];
-      }
-      current[keys[keys.length - 1]] = newItem;
-
-    }
-    await this.save();
-  }
-
-  /**
-   * Saves the persistent item using NodePersist.
-   * @returns {Promise<void>} A promise that resolves when the item is successfully saved.
-   */
-  async save() {
-    if (isSaving) {
-      // If already saving, wait for the previous save operation to complete
-      await new Promise(resolve => {
-        const interval = setInterval(() => {
-          if (!isSaving) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 10);
-      });
+      this.document = newItem;
     }
 
-    isSaving = true; // Acquire the lock
 
-    try {
-      await NodePersist.init({ dir: `./storage/${this.folder}` });
-      console.log(this.key, this.item);
-      await NodePersist.setItem(this.key, JSON.stringify(this.item));
-
-      // Run Listeners
-      if (folderListeners[this.folder]) {
-        for (let listener of folderListeners[this.folder]) {
-          listener();
-        }
+    await this.collection.updateOne({ _id: this.document_id }, { $set: this.document });
+  
+    // Run Listeners
+    console.log(collectionListeners, this.collection_id, collectionListeners[this.collection_id])
+    if (collectionListeners[this.collection_id]) {
+      for (let listener of collectionListeners[this.collection_id]) {
+        await listener();
       }
-    } finally {
-      isSaving = false; // Release the lock
     }
   }
 
   /**
    * Applies a function to modify the value of the persistent item.
-   * If a secondary key is provided, it applies the function to the nested property specified by the secondary key.
    * @param {function} applyfunc - The function to apply to the value of the persistent item.
    * @returns {Promise<void>} A promise that resolves when the item is successfully saved.
    */
   async apply(applyfunc) {
-    if (this.secondary_key) {
-      this.item[this.secondary_key] = applyfunc(this.item[this.secondary_key]);
-    } else {
-      this.item = applyfunc(this.item);
-    }
-    await this.save();
+    let document = await this.get();
+    document = applyfunc(document);
+    await this.collection.updateOne({ _id: this.document_id }, { $set: document });
   }
 
-  get hasData() {
-    return this.item !== undefined && this.item !== null && Object.keys(this.item).length > 0;
+  /**
+   * Checks if the persistent item has data.
+   * @returns {Promise<boolean>} A promise that resolves with a boolean indicating if the item has data.
+   */
+  async hasData() {
+    const document = await this.get();
+    return document !== undefined && document !== null && Object.keys(document).length > 0;
   }
 }
 
 /**
  * Retrieves a persistent item from storage and returns a PersistentItem instance.
- * @param {string} key - The key used to identify the item in storage.
- * @param {string|null} secondary_key - The optional secondary key used to access nested properties of the item.
+ * @param {string} collection_id - The ID of the collection used to store the item.
+ * @param {string} document_id - The ID of the document to be retrieved from the collection.
  * @returns {Promise<PersistentItem>} A promise that resolves with a PersistentItem instance.
  */
-async function usePersistentItem(folder, key, secondary_key = null) {
-  await NodePersist.init({ dir: `./storage/${folder}` });
-  console.log(folder, key, secondary_key)
-  let item = await NodePersist.getItem(key);
-  if (item === null || item === undefined) { 
-    await NodePersist.setItem(key, JSON.stringify({}));
-    item = {};
-  } else {
-    item = JSON.parse(item);
-  }
-  if (!(secondary_key === null || secondary_key === undefined) && item[secondary_key] === undefined) {
-    await NodePersist.setItem(key, JSON.stringify({ [secondary_key]: {} }));
-    item = { [secondary_key]: {} };
-  }
-  return new PersistentItem(folder, item, key, secondary_key);
+async function usePersistentItem(collection_id, document_id, ...keys) {
+  await client.connect();
+  const item = new PersistentItem(collection_id, document_id, keys);
+  await item.updateDocument();
+  return item;
 }
 
-function createStorageListener(folder, listener) {
-  if (!folderListeners[folder]) {
-    folderListeners[folder] = [];
+/**
+ * Creates a storage listener for a specific folder.
+ * @param {string} folder - The folder to listen for changes.
+ * @param {function} listener - The listener function to be called when changes occur.
+ */
+function createCollectionListener(collection_id, listener) {
+  if (!collectionListeners[collection_id]) {
+    collectionListeners[collection_id] = [];
   }
-  folderListeners[folder].push(listener);
+  collectionListeners[collection_id].push(listener);
 }
 
 module.exports = {
   usePersistentItem,
-  createStorageListener
+  createCollectionListener
 };

@@ -1,14 +1,18 @@
 const updateHome = require("../slack_dispatch/update_home")
-const getDevUserIds = require("../slack_utils/get_userids")
-const { BlockMessageBuilder, createButtonBlock } = require("../slack_utils/message_blocks");
-const { usePersistentItem, createStorageListener } = require("../storage_utils/persistent_item");
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+const getDevUserIds = require("../slack_utils/get_userids");
+const { workflowRequestHomeForDev } = require("../slack_utils/home_sections/workflowRequest");
+const { BlockMessageBuilder, createButtonBlock, capitalize } = require("../slack_utils/message_blocks");
+const { usePersistentItem, createCollectionListener } = require("../storage_utils/persistent_item");
+const { bindAction } = require("../webhook_handlers/slack/action_handler");
+const { requestRunWorkflow } = require("../webhook_handlers/slack/actions/run_workflow");
 
 const projectsToTrack = ['risk-explorer', 'explorer-api']
 const stagesToTrack = ['dev', 'test', 'apps']
+const stageEmojis = {
+  dev: ':construction:',
+  test: ':test_tube:',
+  apps: ':rocket:'
+}
 
 async function defaultHomeForDev({user_name, bmb}) {
   
@@ -20,27 +24,28 @@ async function defaultHomeForDev({user_name, bmb}) {
 
   for (const project of projectsToTrack) {
     const stages = await usePersistentItem('projects', project, 'stages');
+    const stages_value = await stages.get();
 
-    if (stages.value && Object.keys(stages.value).length > 0) {
+    if (stages_value && Object.keys(stages_value).length > 0) {
       bmb.addHeader({
         text: `${capitalize(project)} Status`
       });
       for (const stage of stagesToTrack) {
-        if (!stages.value[stage]) {
-          stages.value[stage] = {
+        if (!stages_value[stage]) {
+          stages_value[stage] = {
             last_workflow_run: 'Never',
             ran_by: 'N/A',
             version: 'Unknown'
           }
         }
         bmb.addSection({
-          text: `*${capitalize(stage)}*
-          Last Workflow Run: ${stages.value[stage].last_workflow_run}
-          Ran By: ${stages.value[stage].ran_by}
-          Version: ${stages.value[stage].version}`,
+          text: `*${stageEmojis[stage]}   ${capitalize(stage)}*
+          Last Workflow Run: ${stages_value[stage].last_workflow_run}
+          Ran By: ${stages_value[stage].ran_by}
+          Version: ${stages_value[stage].version}`,
           accessory: createButtonBlock({
-            text: `Deploy to ${capitalize(stage)}`,
-            action_id: `request_run_workflow`,
+            text: `:package:`,
+            action_id: bindAction(`request_run_workflow`, requestRunWorkflow),
             value: JSON.stringify({
               workflow: 'deploy',
               project,
@@ -65,41 +70,16 @@ async function defaultHomeForDev({user_name, bmb}) {
   return bmb
 }
 
-async function workflowRequestHomeForDev({workflow_request, bmb}) {
-  bmb.addButton({
-    text: `:arrow_backward: Return`,
-    action_id: `back_to_default`,
-    value: 'default'
-  })
-  .addHeader({
-    text: `Deploy ${capitalize(workflow_request.project)} to ${capitalize(workflow_request.stage)}`
-  })
-  .addSection({
-    text: `_Please be sure to review any changes before deploying!_`
-  })
-  .addActions({
-    elements: [
-      createButtonBlock({
-        text: `:gear: Start Workflow`,
-        action_id: `run_workflow`,
-        value: JSON.stringify(workflow_request)
-      })
-    ]
-  })
-  .addPadding({padding: 2})
-  .addDivider()
-
-  return bmb
-}
 
 async function buildHomeForDev({user_name, user_id}) {
   // Builds the home for a specific user
   const userConfig = await usePersistentItem('user_config', user_id);
+  const userConfigValue = await userConfig.get();
   let bmb = new BlockMessageBuilder()
 
-  if (userConfig.value && userConfig.value.home_view === 'workflow_request') {
+  if (userConfigValue && userConfigValue.home_view === 'workflow_request') {
     bmb = await workflowRequestHomeForDev({bmb, 
-      workflow_request: userConfig.value.workflow_request})
+      workflow_request: userConfigValue.workflow_request})
   } else {
     bmb = await defaultHomeForDev({user_name, bmb})
   }
@@ -123,7 +103,7 @@ async function updateHomeForDevs() {
   })
 }
 
-createStorageListener('projects', updateHomeForDevs)
-createStorageListener('workflows', updateHomeForDevs)
-createStorageListener('user_config', updateHomeForDevs)
+createCollectionListener('projects', updateHomeForDevs)
+createCollectionListener('workflows', updateHomeForDevs)
+createCollectionListener('user_config', updateHomeForDevs)
 module.exports = updateHomeForDevs

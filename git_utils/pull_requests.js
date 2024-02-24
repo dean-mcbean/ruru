@@ -1,5 +1,7 @@
 const { BlockMessageBuilder, createButtonBlock } = require('../slack_utils/message_blocks');
 const { usePersistentItem } = require('../storage_utils/persistent_item');
+const { bindAction } = require('../webhook_handlers/slack/action_handler');
+const { addReviewerToPullRequest } = require('../webhook_handlers/slack/actions/pull_requests');
 
 function sIf(num) {
   // Returns an 's' if num is greater than 1 i.e. warrants a plural
@@ -20,6 +22,7 @@ function generateDescription(data) {
 async function generateMessageContentForPullRequest(data) {
   // Fetch info on this PR's status
   const persistent_pr_status = await usePersistentItem('pull_requests', 'pr_status', data.pull_request.id);
+  const pr_status = await persistent_pr_status.get();
 
 
   const creator = data.pull_request.user.login;
@@ -40,9 +43,9 @@ async function generateMessageContentForPullRequest(data) {
 
   // Determine Status and Action summary
   const readable_action = data.action.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
-  console.log(persistent_pr_status.value)
-  let status_emoji = persistent_pr_status.value.status_emoji;
-  let action_summary = persistent_pr_status.value.action_summary; // By default, leave it at whatever it was last
+  console.log(pr_status)
+  let status_emoji = pr_status?.status_emoji;
+  let action_summary = pr_status?.action_summary; // By default, leave it at whatever it was last
   if (data.pull_request.merged_at) {
       // Because even on merging, the data.action is still "closed", so we detect it this way
       action_summary = `Merged by ${sender}`; 
@@ -74,7 +77,7 @@ async function generateMessageContentForPullRequest(data) {
   
 
   //Description
-  var description = persistent_pr_status.value.description ?? generateDescription(data);
+  var description = pr_status?.description ?? generateDescription(data);
   if (data.pull_request.body) description = data.pull_request.body
   await persistent_pr_status.set('description', description); // I save this before closed on purpose, to keep the description in case it reopens
   if (data.action == 'closed') description = ''
@@ -89,7 +92,7 @@ async function generateMessageContentForPullRequest(data) {
           text: ':eyes: Review Pull Request',
           value: `${data.pull_request.id}`,
           url: data.pull_request.html_url + '/files',
-          action_id: 'pull_request.add_reviewer'
+          action_id: bindAction('pull_request.add_reviewer', addReviewerToPullRequest)
       })
   }
 

@@ -4,6 +4,7 @@ const { usePersistentItem } = require("../../storage_utils/persistent_item");
 const handleWorkflowRunEvent = async (data) => {
   // fetch persistent storage
   const workflowStatus = await usePersistentItem('workflows', 'workflow_status', data.workflow_run.head_sha);
+  const workflowStatusValue = await workflowStatus.get();
 
   const stage = {
     DeployToDev: 'dev',
@@ -21,16 +22,16 @@ const handleWorkflowRunEvent = async (data) => {
       workflow_id: data.workflow_run.id,
       stage
     });
-    console.log('Workflow In Progress:', workflowStatus.value);
+    console.log('Workflow In Progress:', await workflowStatus.get());
     
   } else if (data.action === 'completed') {
     await workflowStatus.set('status', 'completed');
-    console.log('Workflow Completed:', workflowStatus.value);
+    console.log('Workflow Completed:', await workflowStatus.get());
 
     const rexStages = await usePersistentItem('projects', project, 'stages');
 
     const updatedDate = new Date(data.workflow_run.updated_at);
-    const formattedDate = updatedDate.toLocaleString('en-US', {
+    const formattedDate = updatedDate.toLocaleString('en-NZ', {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
@@ -39,10 +40,10 @@ const handleWorkflowRunEvent = async (data) => {
       year: 'numeric'
     });
     
-    await rexStages.set(workflowStatus.value.stage, {
+    await rexStages.set(workflowStatusValue.stage, {
       last_workflow_run: formattedDate,
       ran_by: data.sender.login,
-      version: workflowStatus.value.version
+      version: workflowStatusValue.version
     });
   }
 }
@@ -51,10 +52,11 @@ const handleWorkflowBotPushEvent = async (data) => {
   // fetch persistent storage
 
   const workflowStatus = await usePersistentItem('workflows','workflow_status', data.head_commit.id);
+  const workflowStatusValue = await workflowStatus.get();
 
   const versionNumber = data.ref.split('/').pop();
   await workflowStatus.set('version', versionNumber);
-  console.log('Workflow Push:', workflowStatus.value);
+  console.log('Workflow Push:', workflowStatusValue);
 }
 
 module.exports = {
