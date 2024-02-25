@@ -9,7 +9,6 @@ const bindAction = (action_id, handler) => {
 const handleAction = async (action_id, action, data) => {
   if (boundActions[action_id]) {
     const result = await boundActions[action_id](action, data)
-    console.log("RES1", result)
     if (typeof result === 'object') {
       // Code to handle when result is an object
       return result

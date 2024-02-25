@@ -63,7 +63,6 @@ class PersistentItem {
    * @returns {Promise<void>} A promise that resolves when the item is successfully saved.
    */
   async set(...params) {
-    console.log(params)
     const newItem = params.pop();
     const mykeys = [...this.keys];
     const keys = params.slice(0, -1);
@@ -71,19 +70,16 @@ class PersistentItem {
     if (lastKey === undefined) {
       lastKey = mykeys.pop();
     }
-    console.log(mykeys, keys, lastKey, newItem)
     
     await this.updateDocument();
     let document = this.document;
     for (let key of mykeys) {
-      console.log(key, document)
       if (document[key] === undefined || document[key] === null || typeof document[key] !== 'object') {
         document[key] = {};
       }
       document = document[key];
     }
     for (let key of keys) {
-      console.log('a', key, document)
       if (document[key] === undefined || document[key] === null || typeof document[key] !== 'object') {
         document[key] = {};
       }
@@ -99,7 +95,6 @@ class PersistentItem {
     await this.collection.updateOne({ _id: this.document_id }, { $set: this.document });
   
     // Run Listeners
-    console.log(collectionListeners, this.collection_id, collectionListeners[this.collection_id])
     if (collectionListeners[this.collection_id]) {
       for (let listener of collectionListeners[this.collection_id]) {
         await listener();
@@ -153,7 +148,14 @@ function createCollectionListener(collection_id, listener) {
   collectionListeners[collection_id].push(listener);
 }
 
+async function filterCollection(collection_id, filter) {
+  await client.connect();
+  const collection = ruruDB.collection(collection_id);
+  return collection.find(filter).toArray();
+}
+
 module.exports = {
   usePersistentItem,
-  createCollectionListener
+  createCollectionListener,
+  filterCollection
 };

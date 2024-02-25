@@ -7,6 +7,7 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 const updateHomeForDevs = require('./slack_usecases/updateHomeForDevs');
 
+
 var app = express();
 
 app.use(logger('dev'));
@@ -37,8 +38,12 @@ app.use(function(err, req, res, next) {
 function initApp() {
   // Initialize the app
   // eslint-disable-next-line no-console
-  console.log('Initializing the app');
-  updateHomeForDevs()
+    console.log('>>> Initializing the app!');
+    console.log('\t>>> Loading User Info...');
+    //updateStoredUsers() This exceeds the rate limit for the Slack API
+    console.log('\t>>> Updating Home Pages...');
+    updateHomeForDevs()
+    console.log('>>> App Initialized!');
 }
 initApp()
 

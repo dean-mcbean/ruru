@@ -1,7 +1,7 @@
 var express = require('express');
-const handlePullRequestEvent = require('../webhook_handlers/github/pull_requests');
 const { handleWorkflowRunEvent, handleWorkflowBotPushEvent } = require('../webhook_handlers/github/workflow_runs');
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
+const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
 var router = express.Router();
 
 /* POST from git. */
@@ -13,6 +13,12 @@ router.post('/', async (req, res, next) => {
   if (req.body.pull_request) {
     await handlePullRequestEvent(req.body)
     res.status(200)
+  } else if (req.body.issue) {
+    if (req.body.issue.pull_request) {
+      // if this issue is actually a pull request
+      await handleIssuePullRequestEvent(req.body)
+      res.status(200)
+    }
   } else if (req.headers['x-github-event'] === 'ping ') {
     res.status(200)
   } else if (req.headers['x-github-event'] === 'workflow_run') {
@@ -37,7 +43,6 @@ router.post('/slack/', async (req, res, next) => {
   console.log(data);
   for (const action of data.actions) {
     const result = await handleAction(action.action_id, action, data)
-    console.log("RES", result)
     if (typeof result === 'object') {
       res.status(402).send(result);
     } else if (result) {

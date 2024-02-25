@@ -14,7 +14,6 @@ const addReviewerToPullRequest = async (action, data) => {
     const message_ts = data.container.message_ts;
 
     // Update status emoji (the regex subs the eyes into the title)
-    console.log(pr_status_value)
     pr_status_value.status_emoji = ':eyes:';
     pr_status_value.message_blocks[0].text.text = pr_status_value.message_blocks[0].text.text.replace(/\|:([^:]+):/g, `|:eyes:`);
 

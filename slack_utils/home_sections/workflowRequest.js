@@ -95,8 +95,6 @@ async function workflowRequestHomeForDev({workflow_request, bmb}) {
   .addPadding({padding: 2})
   .addDivider()
 
-  console.log(bmb.build())
-
   return bmb
 }
 

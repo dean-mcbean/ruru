@@ -7,6 +7,7 @@ const updateMessage = async (message_arguments) => {
         // Call the chat.postMessage method using the WebClient
         const result = await client.chat.update({
             text: "Placeholder text (Contact Dean if you see this)",
+            mrkdwn: true,
             ...message_arguments
         });
 

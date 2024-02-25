@@ -2,7 +2,6 @@ const { usePersistentItem } = require("../../../storage_utils/persistent_item");
 
 const requestRunWorkflow = async (action, data) => {
   const workflow_data = JSON.parse(action.value);
-  console.log('Request to Running Workflow:', workflow_data, data.user);
 
   const userConfig = await usePersistentItem('user_config', data.user.id);
   
