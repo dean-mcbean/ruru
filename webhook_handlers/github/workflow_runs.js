@@ -24,7 +24,7 @@ const handleWorkflowRunEvent = async (data) => {
     });
     console.log('Workflow In Progress:', await workflowStatus.get());
     
-  } else if (data.action === 'completed') {
+  } else if (data.action === 'completed' && workflowStatusValue) {
     await workflowStatus.set('status', 'completed');
     console.log('Workflow Completed:', await workflowStatus.get());
 

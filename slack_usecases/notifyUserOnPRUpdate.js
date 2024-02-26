@@ -22,6 +22,10 @@ async function notifyUserOnPRUpdate(slack_user, data) {
     prUrl = data.pull_request.html_url;
     repoName = ` in ${data.pull_request.head.repo.name}`;
     prTitle = data.pull_request.title;
+
+    if (data.review) {
+      prUrl = data.review.html_url;
+    }
   }
 
   let body = '';

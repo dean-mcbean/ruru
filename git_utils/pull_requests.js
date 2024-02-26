@@ -92,6 +92,14 @@ async function generateMessageContentForPullRequest(data) {
     await persistent_pr_status.set('description', description); // I save this before closed on purpose, to keep the description in case it reopens
     if (data.action == 'closed') description = ''
 
+    //Pull html images from description using regex
+    const imgRegex = /<img.*?src=['"](.*?)['"]/;
+    const imgMatch = imgRegex.exec(description);
+    if (imgMatch) {
+        description = description.replace(imgMatch[0], `<${imgMatch[1]}>`);
+    }
+
+
     
     await persistent_pr_status.set('title', data.pull_request.title);
 
@@ -104,7 +112,7 @@ async function generateMessageContentForPullRequest(data) {
             text: ':eyes: Review Pull Request',
             value: `${pr_url[pr_url.length - 1]}`,
             url: data.pull_request.html_url + '/files',
-            action_id: bindAction('pull_request.add_reviewer', addReviewerToPullRequest)
+            action_id: bindAction('pr_add_reviewer', addReviewerToPullRequest)
         })
     }
 
@@ -115,7 +123,7 @@ async function generateMessageContentForPullRequest(data) {
 ${description}`,
         accessory: button
     })
-    .addContext({
+    bmb.addContext({
         text: `PR by ${creator} |  *${status}*  |  ${action_summary}  |  ${repo_url}`
     })
     .addDivider()

@@ -3,8 +3,10 @@ const { generateMessageContentForPullRequest } = require('../../git_utils/pull_r
 const sendMessage = require('../../slack_dispatch/send_message');
 const updateMessage = require('../../slack_dispatch/update_message');
 const notifyUserOnPRUpdate = require('../../slack_usecases/notifyUserOnPRUpdate');
+const { getPRChannelFromRepo } = require('../../storage_utils/get_slack_channel');
 const { getUserByGithubUsername } = require('../../storage_utils/get_user');
 const { usePersistentItem } = require('../../storage_utils/persistent_item');
+
 
 
 const handlePullRequestEvent = async (data) => {
@@ -20,7 +22,7 @@ const handlePullRequestEvent = async (data) => {
     if (['opened', 'reopened'].includes(data.action) || !messageHasData) {
         // Create message
         const result = await sendMessage({
-            channel: process.env.DEV_CHAT_CHANNELID, 
+            channel: await getPRChannelFromRepo(data.pull_request.head.repo.name), 
             blocks: await generateMessageContentForPullRequest(data),
             text: `New PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
         })
