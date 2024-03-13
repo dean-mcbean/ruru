@@ -1,8 +1,10 @@
-const sendMessage = require("../slack_dispatch/send_message");
-const { BlockMessageBuilder } = require("../slack_utils/message_blocks");
-const { getUserByGithubUsername } = require("../storage_utils/get_user");
+const sendMessage = require("../../slack_dispatch/send_message");
+const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
+const { getUserByGithubUsername } = require("../../storage_utils/get_user");
 
 async function notifyUserOnPRUpdate(slack_user, data) {
+  if (!slack_user.notifications || !slack_user.notifications.pull_requests) return;
+
   let sender = data.sender.login;
   const slack_sender = await getUserByGithubUsername(sender);
   if (slack_sender) {

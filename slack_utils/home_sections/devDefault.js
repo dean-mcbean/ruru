@@ -1,6 +1,7 @@
 const { usePersistentItem } = require("../../storage_utils/persistent_item");
 const { bindAction } = require("../../webhook_handlers/slack/action_handler");
 const { requestRunWorkflow } = require("../../webhook_handlers/slack/actions/run_workflow");
+const { openUserSettings } = require("../../webhook_handlers/slack/actions/user_settings");
 const { capitalize, createButtonBlock } = require("../message_blocks");
 
 const projectsToTrack = ['risk-explorer', 'explorer-api']
@@ -14,7 +15,11 @@ const stageEmojis = {
 async function defaultHomeForDev({user_name, bmb}) {
   
   bmb.addSection({
-    text: `*Welcome, ${capitalize(user_name)}!*`
+    text: `*Welcome, ${capitalize(user_name)} the Developer!*`,
+    accessory: createButtonBlock({
+      text: `:gear: User Settings`,
+      action_id: bindAction(`openUserSettings`, openUserSettings)
+    })
   })
   .addPadding({padding: 1})
   .addDivider()

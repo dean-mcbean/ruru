@@ -3,6 +3,7 @@ const { handleWorkflowRunEvent, handleWorkflowBotPushEvent } = require('../webho
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
+const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
 var router = express.Router();
 
 /* POST from git. */
@@ -31,6 +32,10 @@ router.post('/', async (req, res, next) => {
   } else if (req.headers['x-github-event'] === 'push' && req.body.pusher.name === 'github-actions[bot]') {
     await handleWorkflowBotPushEvent(req.body)
     res.status(200)
+  } else if (req.headers['x-github-event'] === 'create' && req.body.ref_type === 'branch') {
+    // handle branch created event
+    await handleNewBranchEvent(req.body)
+    res.status(200);
   }
 
   

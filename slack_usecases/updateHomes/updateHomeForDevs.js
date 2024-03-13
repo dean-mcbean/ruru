@@ -1,9 +1,10 @@
-const updateHome = require("../slack_dispatch/update_home");
-const { getDevUsers } = require("../slack_utils/get_users");
-const defaultHomeForDev = require("../slack_utils/home_sections/devDefault");
-const { workflowRequestHomeForDev } = require("../slack_utils/home_sections/workflowRequest");
-const { BlockMessageBuilder } = require("../slack_utils/message_blocks");
-const { usePersistentItem, createCollectionListener } = require("../storage_utils/persistent_item");
+const updateHome = require("../../slack_dispatch/update_home");
+const { getDevUsers } = require("../../slack_utils/get_users");
+const defaultHomeForDev = require("../../slack_utils/home_sections/devDefault");
+const { userSettings } = require("../../slack_utils/home_sections/userSettings");
+const { workflowRequestHomeForDev } = require("../../slack_utils/home_sections/workflowRequest");
+const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
+const { usePersistentItem } = require("../../storage_utils/persistent_item");
 
 
 
@@ -16,6 +17,10 @@ async function buildHomeForDev({user_name, user_id}) {
   if (userConfigValue && userConfigValue.home_view === 'workflow_request') {
     bmb = await workflowRequestHomeForDev({bmb, 
       workflow_request: userConfigValue.workflow_request})
+
+  } else if (userConfigValue && userConfigValue.home_view === 'user_settings') {
+    bmb = await userSettings({bmb, userConfigValue})
+
   } else {
     bmb = await defaultHomeForDev({user_name, bmb})
   }
@@ -40,7 +45,7 @@ async function updateHomeForDevs() {
   })
 }
 
-createCollectionListener('projects', updateHomeForDevs)
-createCollectionListener('workflows', updateHomeForDevs)
-createCollectionListener('user_config', updateHomeForDevs)
-module.exports = updateHomeForDevs
+module.exports = {
+  updateHomeForDevs,
+  buildHomeForDev
+}

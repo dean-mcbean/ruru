@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
-const updateHomeForDevs = require('./slack_usecases/updateHomeForDevs');
+const updateHomeForAllUsers = require('./slack_usecases/updateHomes/updateHomeForUsers');
 
 
 var app = express();
@@ -42,7 +42,7 @@ function initApp() {
     console.log('\t>>> Loading User Info...');
     //updateStoredUsers() This exceeds the rate limit for the Slack API
     console.log('\t>>> Updating Home Pages...');
-    updateHomeForDevs()
+    updateHomeForAllUsers()
     console.log('>>> App Initialized!');
 }
 initApp()

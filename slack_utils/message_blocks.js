@@ -105,12 +105,20 @@ function createPlainTextElement({text, emoji = true}) {
   };
 }
 
-function createTextInputElement({action_id, placeholder, initial_value = undefined}) {
+function createTextInputElement({action_id, placeholder, initial_value = undefined, triggerOn = undefined}) {
+
+  const dispatchActionConfig = triggerOn ? {
+    trigger_actions_on: triggerOn
+  } : undefined;
+
+  // options for triggerOn: ['on_enter_pressed', 'on_character_entered']
+
   return {
     type: 'plain_text_input',
     action_id,
     placeholder: createPlainTextElement({text: placeholder}),
-    initial_value
+    initial_value,
+    dispatch_action_config: dispatchActionConfig,
   };
 }
 
@@ -118,7 +126,44 @@ function createInputBlock({label, element}) {
   return {
     type: 'input',
     label: createPlainTextElement({text: label}),
-    element
+    element,
+    dispatch_action: true,
+  };
+}
+
+function createDropdownElement({action_id, options, initial_option = undefined, placeholder = 'Select an option'}) {
+  return {
+    type: 'static_select',
+    action_id,
+    options: options.map(option => {
+      return {
+        text: createPlainTextElement({text: option.text}),
+        value: option.value,
+      };
+    }),
+    initial_option,
+    placeholder: createPlainTextElement({text: placeholder}),
+  };
+}
+
+function createCheckboxListElement({action_id, options, initial_options = undefined}) {
+  return {
+    type: 'checkboxes',
+    action_id,
+    options: options.map(option => {
+      return {
+        text: createPlainTextElement({text: option.text}),
+        value: option.value,
+        description: option.description ? createPlainTextElement({text: option.description}) : undefined,
+      };
+    }),
+    initial_options: initial_options ? initial_options.map(option => {
+      return {
+        text: createPlainTextElement({text: option.text}),
+        value: option.value,
+        description: option.description ? createPlainTextElement({text: option.description}) : undefined,
+      };
+    }) : undefined,
   };
 }
 
@@ -181,10 +226,24 @@ class BlockMessageBuilder {
     return this;
   }
 
-  addTextInput({label, action_id, placeholder, initial_value = undefined}) {
+  addTextInput({label, action_id, placeholder, initial_value = undefined, triggerOn = undefined}) {
     return this.addInput({
       label,
-      element: createTextInputElement({action_id, placeholder, initial_value})
+      element: createTextInputElement({action_id, placeholder, initial_value, triggerOn}),
+    });
+  }
+
+  addDropdown({label, action_id, options, initial_option = undefined, placeholder = 'Select an option'}) {
+    return this.addInput({
+      label,
+      element: createDropdownElement({action_id, options, initial_option, placeholder}),
+    });
+  }
+
+  addCheckboxList({label, action_id, options, initial_options = undefined}) {
+    return this.addInput({
+      label,
+      element: createCheckboxListElement({action_id, options, initial_options}),
     });
   }
 

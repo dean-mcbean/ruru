@@ -6,6 +6,13 @@ async function getUserByGithubUsername(username) {
   return users[0];
 }
 
+async function getUserBySlackId(id) {
+  const users = await filterCollection("user_config", { id: id });
+
+  return users[0];
+}
+
 module.exports = {
-  getUserByGithubUsername
+  getUserByGithubUsername,
+  getUserBySlackId
 }
