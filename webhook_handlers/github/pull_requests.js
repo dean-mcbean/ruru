@@ -6,6 +6,15 @@ const notifyUserOnPRUpdate = require('../../slack_usecases/notifyUserOnPRUpdate'
 const { getUserByGithubUsername } = require('../../storage_utils/get_user');
 const { usePersistentItem } = require('../../storage_utils/persistent_item');
 
+function getChannelIdForRepo(repo) {
+    if (['risk-explorer','explorer-api', 'ui-component-library'].includes(repo)) {
+        return process.env.DEV_CHAT_CHANNELID;
+    }
+    if (['t-rex'].includes(repo)) {
+        return process.env.ANALYST_CHANNELID;
+    }
+    return process.env.TESTING_CHANNELID;
+}
 
 const handlePullRequestEvent = async (data) => {
     // fetch persistent storage
@@ -17,10 +26,10 @@ const handlePullRequestEvent = async (data) => {
 
     // React to Pull Request notification type
     console.log(data.action, messageHasData, messageInfoValue)
-    if (['opened', 'reopened'].includes(data.action) || !messageHasData) {
+    if (['opened', 'reopened'].includes(data.action)) {
         // Create message
         const result = await sendMessage({
-            channel: process.env.DEV_CHAT_CHANNELID, 
+            channel: getChannelIdForRepo(data.pull_request.head.repo.name), 
             blocks: await generateMessageContentForPullRequest(data),
             text: `New PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
         })
@@ -40,7 +49,6 @@ const handlePullRequestEvent = async (data) => {
     }
 
     // Notify user if PR is merged, approved, or changes requested
-    console.log("HERE", data)
     const slack_user = await getUserByGithubUsername(data.pull_request.user.login);
     console.log('slack_user', slack_user, data.pull_request.user.login)
     if (slack_user && data.pull_request.user.login !== data.sender.login) {

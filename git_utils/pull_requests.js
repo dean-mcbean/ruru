@@ -124,7 +124,7 @@ ${description}`,
         // It's been merged!
         bmb.clear()
         .addContext({
-            text: `PR by ${creator} |  *${status}*  |  ${action_summary}  |  ${repo_url}`
+            text: `*<${data.pull_request.html_url}|${data.pull_request.title}>*  |  *${status}*  |  ${repo_url}`
         })
     }
 

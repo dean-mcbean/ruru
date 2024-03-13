@@ -40,11 +40,13 @@ const handleWorkflowRunEvent = async (data) => {
       year: 'numeric'
     });
     
-    await rexStages.set(workflowStatusValue.stage, {
-      last_workflow_run: formattedDate,
-      ran_by: data.sender.login,
-      version: workflowStatusValue.version
-    });
+    if (workflowStatusValue) {
+      await rexStages.set(workflowStatusValue.stage, {
+        last_workflow_run: formattedDate,
+        ran_by: data.sender.login,
+        version: workflowStatusValue.version
+      });
+    }
   }
 }
 

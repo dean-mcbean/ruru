@@ -2,6 +2,7 @@ var express = require('express');
 const { handleWorkflowRunEvent, handleWorkflowBotPushEvent } = require('../webhook_handlers/github/workflow_runs');
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
+const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 var router = express.Router();
 
 /* POST from git. */
@@ -17,6 +18,9 @@ router.post('/', async (req, res, next) => {
     if (req.body.issue.pull_request) {
       // if this issue is actually a pull request
       await handleIssuePullRequestEvent(req.body)
+      res.status(200)
+    } else {
+      await handleIssueEvent(req.body)
       res.status(200)
     }
   } else if (req.headers['x-github-event'] === 'ping ') {

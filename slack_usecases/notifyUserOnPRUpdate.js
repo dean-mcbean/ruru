@@ -13,7 +13,7 @@ async function notifyUserOnPRUpdate(slack_user, data) {
   let repoName = '';
   let prTitle = '';
   if (!data.review) data.review = {};
-  if (data.comment) {
+  if (data.issue && data.comment) {
     data.review = data.comment;
     data.review.state = "commented";
     prUrl = data.comment.html_url;
