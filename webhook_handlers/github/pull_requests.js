@@ -2,19 +2,11 @@
 const { generateMessageContentForPullRequest } = require('../../git_utils/pull_requests');
 const sendMessage = require('../../slack_dispatch/send_message');
 const updateMessage = require('../../slack_dispatch/update_message');
-const notifyUserOnPRUpdate = require('../../slack_usecases/notifyUserOnPRUpdate');
+const notifyUserOnPRUpdate = require('../../slack_usecases/notifyUser/notifyUserOnPRUpdate');
+const { getChannelIdForRepo } = require('../../storage_utils/get_channelid_for_repo');
 const { getUserByGithubUsername } = require('../../storage_utils/get_user');
 const { usePersistentItem } = require('../../storage_utils/persistent_item');
 
-function getChannelIdForRepo(repo) {
-    if (['risk-explorer','explorer-api', 'ui-component-library'].includes(repo)) {
-        return process.env.DEV_CHAT_CHANNELID;
-    }
-    if (['t-rex'].includes(repo)) {
-        return process.env.ANALYST_CHANNELID;
-    }
-    return process.env.TESTING_CHANNELID;
-}
 
 const handlePullRequestEvent = async (data) => {
     // fetch persistent storage
