@@ -61,7 +61,25 @@ const handleWorkflowBotPushEvent = async (data) => {
   console.log('Workflow Push:', workflowStatusValue);
 }
 
+const updateStageVersion = async (data) => {
+  const repo = data.repo;
+  const stage = data.stage;
+  const version = data.version;
+
+  const rexStages = await usePersistentItem('projects', repo, 'stages');
+  const rexStagesValue = await rexStages.get();
+
+  if (rexStagesValue) {
+    await rexStages.set(stage, {
+      last_workflow_run: rexStagesValue[stage].last_workflow_run,
+      ran_by: rexStagesValue[stage].ran_by,
+      version
+    });
+  }
+}
+
 module.exports = {
   handleWorkflowRunEvent,
-  handleWorkflowBotPushEvent
+  handleWorkflowBotPushEvent,
+  updateStageVersion
 }

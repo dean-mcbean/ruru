@@ -1,5 +1,5 @@
 const updateHome = require("../../slack_dispatch/update_home");
-const { getDevUsers } = require("../../slack_utils/get_users");
+const { getAnalystUsers } = require("../../slack_utils/get_users");
 const defaultHomeForDev = require("../../slack_utils/home_sections/devDefault");
 const { userSettings } = require("../../slack_utils/home_sections/userSettings");
 const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
@@ -27,8 +27,8 @@ async function buildHomeForAnalyst({user_name, user_id}) {
 }
 
 async function updateHomeForAnalysts() {
-  const dev_users = await getDevUsers()
-  dev_users.forEach(async (user) => {
+  const analyst_users = await getAnalystUsers()
+  analyst_users.forEach(async (user) => {
     await updateHome({
       user_id: user.id,
       blocks: await buildHomeForAnalyst({

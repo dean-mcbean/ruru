@@ -12,7 +12,16 @@ async function getUserBySlackId(id) {
   return users[0];
 }
 
+async function getUsersWithNotification(notification) {
+  const filter = {};
+  filter[`notifications.${notification}`] = true;
+  const users = await filterCollection("user_config", filter);
+
+  return users;
+}
+
 module.exports = {
   getUserByGithubUsername,
-  getUserBySlackId
+  getUserBySlackId,
+  getUsersWithNotification
 }
