@@ -1,8 +1,12 @@
+/* eslint-disable no-unused-vars */
+const uploadFileToSlack = require('../slack_dispatch/upload_file');
 const { BlockMessageBuilder, createButtonBlock } = require('../slack_utils/message_blocks');
 const { getUserByGithubUsername } = require('../storage_utils/get_user');
 const { usePersistentItem } = require('../storage_utils/persistent_item');
 const { bindAction } = require('../webhook_handlers/slack/action_handler');
 const { addReviewerToPullRequest } = require('../webhook_handlers/slack/actions/pull_requests');
+const axios = require('axios');
+const fs = require('fs');
 
 function sIf(num) {
     // Returns an 's' if num is greater than 1 i.e. warrants a plural
@@ -19,6 +23,108 @@ function generateDescription(data) {
         description.push(`${data.pull_request.changed_files} Changed File${sIf(data.pull_request.changed_files)}`)
     return description.join(', ')
 }
+
+async function fetchAndConvertToBase64(url) {
+    try {
+        const filename = url.split('/').pop();
+        const fileLocation = `public/images/${filename}.png`;
+        // if file already exists, return it
+        if (fs.existsSync(fileLocation)) {
+            return fileLocation;
+        }
+
+        console.log(`Bearer ${process.env.GITHUB_TOKEN}`)
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer', // Ensure binary response
+            headers: {
+              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, // Replace with your actual token
+            },
+          });
+      
+        const imageBuffer = Buffer.from(response.data, 'binary');
+        //const base64Image = imageBuffer.toString('base64');
+    
+        // Save the base64 image to a file (optional)
+        fs.writeFileSync(fileLocation, imageBuffer);
+    
+        return fileLocation;
+    } catch (error) {
+      console.error('Error fetching or converting image:', error);
+    }
+    return '';
+  }
+
+async function getImageBlobsFromDescription(description) {
+    // Extracts image URLs from a description
+    let imageUrls = [];
+    const sectionUrls = description.match(/!\[image\]\((https?:\/\/[^\s]+)\)/g);
+    if (sectionUrls) {
+        imageUrls = sectionUrls.map(url => {
+            return url.match(/!\[image\]\((https?:\/\/[^\s]+)\)/)[1];
+        });
+    }
+
+    let images = [];
+    for (const url of imageUrls) {
+        const base64Image = await fetchAndConvertToBase64(url);
+        images.push(base64Image);
+    }
+
+    return images;
+}
+
+
+async function uploadImageUrlsToSlack(description) {
+    const images = await getImageBlobsFromDescription(description);
+
+    // Upload image blobs to Slack
+    const imageUrls = [];
+    for (const image of images) {
+        const imageUrl = await uploadFileToSlack(image, image.split('/').pop(), process.env.DEV_CHAT_CHANNELID);
+        if (imageUrl) {
+            imageUrls.push(imageUrl);
+        }
+    }
+
+    return imageUrls;
+}
+
+function replaceImagesWithWords(description) {
+    // Replaces image markdown with the word "image" linked to the same url
+    let index = 1;
+    return description.replace(/!\[image\]\((https?:\/\/[^\s]+)\)/g, (match, url) => {
+        return `<${url}|🖼️ (image)>`;
+    });
+}
+
+function replaceOtherLinksWithShorterLinks(description) {
+    // Replaces other links with shorter links
+    return description.replace(/\[https?:\/\/(.*?)\]\((https?:\/\/[^\s]+)\)/g, (match, text, url) => {
+        return `<${url}|🔗${text.substring(0, 16)}${text.length >= 16 ? '...' : ''}>`;
+    });
+}
+
+/* 
+Image blobs!
+
+const myToken = 'YOUR_PERSONAL_ACCESS_TOKEN';
+const apiUrl = 'https://api.github.com/repos/uintel/risk-explorer/assets/89552947/8d5dc35b-68bd-4711-aedc-528972c89abf';
+
+fetch(apiUrl, {
+  headers: {
+    Authorization: `Bearer ${myToken}`,
+  },
+})
+  .then(response => response.blob())
+  .then(blob => {
+    // Handle the image blob (e.g., display it, save it, etc.)
+    console.log('Image fetched successfully:', blob);
+  })
+  .catch(error => {
+    console.error('Error fetching image:', error);
+  });
+*/
+
 
 async function generateMessageContentForPullRequest(data) {
     // Fetch info on this PR's status
@@ -92,6 +198,18 @@ async function generateMessageContentForPullRequest(data) {
     await persistent_pr_status.set('description', description); // I save this before closed on purpose, to keep the description in case it reopens
     if (data.action == 'closed') description = ''
 
+    /* const imageUrls = await uploadImageUrlsToSlack(description);
+    await persistent_pr_status.set('image_ids', imageUrls);
+    const slackImageBlocks = imageUrls.map(url => {
+        return {
+            imageId: url.id,
+            altText: 'image'
+        }
+    })
+    console.log(slackImageBlocks, imageUrls, 'image urls') */
+    description = replaceImagesWithWords(description);
+    description = replaceOtherLinksWithShorterLinks(description);
+
     
     await persistent_pr_status.set('title', data.pull_request.title);
 
@@ -103,7 +221,7 @@ async function generateMessageContentForPullRequest(data) {
         button = createButtonBlock({
             text: ':eyes: Review Pull Request',
             value: `${pr_url[pr_url.length - 1]}`,
-            url: data.pull_request.html_url + '/files',
+            url: data.pull_request.html_url,
             action_id: bindAction('pull_request.add_reviewer', addReviewerToPullRequest)
         })
     }
@@ -119,6 +237,9 @@ ${description}`,
         text: `PR by ${creator} |  *${status}*  |  ${action_summary}  |  ${repo_url}`
     })
     .addDivider()
+
+    // Add image blocks
+    //slackImageBlocks.forEach(block => bmb.addSlackImage(block));
     
     if (data.pull_request.merged_at) {
         // It's been merged!

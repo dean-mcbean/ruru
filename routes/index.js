@@ -11,8 +11,6 @@ var router = express.Router();
 router.post('/', async (req, res, next) => {
   res.status(400)
 
-  console.log(req.body)
-
   // Pass to relevant webhook handler
   if (req.body.type === 'update_version') {
     await updateStageVersion(req.body)
@@ -55,7 +53,6 @@ router.post('/slack/', async (req, res, next) => {
   const data = JSON.parse(req.body.payload)
 
   // Pass actions to relevant webhook handler
-  console.log(data);
   for (const action of data.actions) {
     const result = await handleAction(action.action_id, action, data)
     if (typeof result === 'object') {

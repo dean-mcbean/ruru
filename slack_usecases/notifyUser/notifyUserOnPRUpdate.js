@@ -31,8 +31,6 @@ async function notifyUserOnPRUpdate(slack_user, data) {
     body = `\n\`\`\`${data.review.body}\`\`\``;
   }
 
-  console.log('data', data)
-
   const bmb = new BlockMessageBuilder();
   let text = null;
 

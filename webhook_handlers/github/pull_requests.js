@@ -8,6 +8,7 @@ const { getUserByGithubUsername } = require('../../storage_utils/get_user');
 const { usePersistentItem } = require('../../storage_utils/persistent_item');
 
 
+
 const handlePullRequestEvent = async (data) => {
     // fetch persistent storage
     
@@ -17,7 +18,6 @@ const handlePullRequestEvent = async (data) => {
     const messageHasData = await messageInfo.hasData();
 
     // React to Pull Request notification type
-    console.log(data.action, messageHasData, messageInfoValue)
     if (['opened', 'reopened'].includes(data.action)) {
         // Create message
         const result = await sendMessage({
@@ -42,7 +42,6 @@ const handlePullRequestEvent = async (data) => {
 
     // Notify user if PR is merged, approved, or changes requested
     const slack_user = await getUserByGithubUsername(data.pull_request.user.login);
-    console.log('slack_user', slack_user, data.pull_request.user.login)
     if (slack_user && data.pull_request.user.login !== data.sender.login) {
         await notifyUserOnPRUpdate(slack_user, data);
     }

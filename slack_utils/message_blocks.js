@@ -247,6 +247,27 @@ class BlockMessageBuilder {
     });
   }
 
+  addFile({externalId}) {
+    console.log(externalId)
+    this.blocks.push({
+      type: 'file',
+      external_id: externalId
+    });
+    return this;
+  }
+
+  addSlackImage({imageUrl, imageId, altText}) {
+    const slack_file = {}
+    if (imageUrl) slack_file.url = imageUrl
+    if (imageId) slack_file.id = imageId
+    this.blocks.push({
+      type: 'image',
+      slack_file,
+      alt_text: altText
+    });
+    return this;
+  }
+
   clear() {
     this.blocks = [];
     return this;
