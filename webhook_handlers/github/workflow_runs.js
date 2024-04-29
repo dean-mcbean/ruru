@@ -1,4 +1,7 @@
+const sendMessage = require("../../slack_dispatch/send_message");
+const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
 const { usePersistentItem } = require("../../storage_utils/persistent_item");
+const fs = require('fs');
 
 
 const handleWorkflowRunEvent = async (data) => {
@@ -78,8 +81,69 @@ const updateStageVersion = async (data) => {
   }
 }
 
+function formatTestResults(testJson) {
+  if (!testJson || !testJson.stats) return ' - Unknown error occurred';
+  let result = '';
+  if (testJson.stats.expected > 0) result += ` - ${testJson.stats.expected} tests passed`;
+  if (testJson.stats.unexpected > 0) result += ` - ${testJson.stats.unexpected} tests failed`;
+  if (testJson.stats.skipped > 0) result += ` - ${testJson.stats.skipped} tests skipped`;
+  if (testJson.stats.flaky > 0) result += ` - ${testJson.stats.flaky} tests were flaky`;
+  return result;
+}
+
+const handlePlaywrightTestEvent = async (data, triggering_workflow) => {
+  if (data === 'WorkflowFailed') {
+    const blocks = new BlockMessageBuilder();
+    blocks.addHeader({text: `*Workflow "${triggering_workflow}" Failed!*`});
+    await sendMessage({
+      channel: process.env.DEV_CHAT_CHANNELID, 
+      blocks: blocks.build(),
+      text: `Workflow Failed!`
+    })
+    return;
+  }
+
+  const filePath = 'public/data/last-playwright-test.json';
+
+  fs.writeFile(filePath, JSON.stringify(data), (err) => {
+    if (err) {
+      console.error('Error writing JSON file:', err);
+    } else {
+      console.log('JSON file saved successfully');
+    }
+  });
+
+  const shouldSend = !data || !data.stats || data.stats.unexpected > 0 || data.stats.flaky > 0;
+
+  
+  if (shouldSend) {
+    const message = formatTestResults(data);
+  
+    const blocks = new BlockMessageBuilder();
+    blocks.addSection({text: `*Playwright Tests Failed for workflow ${triggering_workflow}*`});
+    blocks.addSection({text: message});
+  
+    // Send message to slack
+    await sendMessage({
+      channel: process.env.DEV_CHAT_CHANNELID, 
+      blocks: blocks.build(),
+      text: `Playwright Tests Failed!`
+    })
+  }/*  else {
+    const blocks = new BlockMessageBuilder();
+    blocks.addSection({text: `*Playwright Tests Passed for workflow ${triggering_workflow}*`});
+    
+    await sendMessage({
+      channel: process.env.DEV_CHAT_CHANNELID, 
+      blocks: blocks.build(),
+      text: `Playwright Tests Passed!`
+    })
+  } */
+}
+
 module.exports = {
   handleWorkflowRunEvent,
   handleWorkflowBotPushEvent,
-  updateStageVersion
+  updateStageVersion,
+  handlePlaywrightTestEvent
 }

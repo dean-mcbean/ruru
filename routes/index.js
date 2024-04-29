@@ -1,5 +1,5 @@
 var express = require('express');
-const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion } = require('../webhook_handlers/github/workflow_runs');
+const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion, handlePlaywrightTestEvent } = require('../webhook_handlers/github/workflow_runs');
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
@@ -12,13 +12,19 @@ router.post('/', async (req, res, next) => {
   res.status(400)
 
   // Pass to relevant webhook handler
-  if (req.body.type === 'update_version') {
+  if (req.query.source === 'playwright') {
+    console.log(req.query)
+    await handlePlaywrightTestEvent(req.body, req.query.triggering_workflow)
+    res.status(200)
+
+  } else if (req.body.type === 'update_version') {
     await updateStageVersion(req.body)
     res.status(200)
     
   } else if (req.body.pull_request) {
     await handlePullRequestEvent(req.body)
     res.status(200)
+
   } else if (req.body.issue) {
     if (req.body.issue.pull_request) {
       // if this issue is actually a pull request

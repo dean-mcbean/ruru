@@ -28,9 +28,11 @@ async function fetchAndConvertToBase64(url) {
     try {
         const filename = url.split('/').pop();
         const fileLocation = `public/images/${filename}.png`;
+
+        console.log('filename', fileLocation, filename)
         // if file already exists, return it
-        if (fs.existsSync(fileLocation)) {
-            return fileLocation;
+        if (fs.existsSync(filename)) {
+            return filename + '.png';
         }
 
         console.log(`Bearer ${process.env.GITHUB_TOKEN}`)
@@ -47,7 +49,7 @@ async function fetchAndConvertToBase64(url) {
         // Save the base64 image to a file (optional)
         fs.writeFileSync(fileLocation, imageBuffer);
     
-        return fileLocation;
+        return filename + '.png';
     } catch (error) {
       console.error('Error fetching or converting image:', error);
     }
@@ -71,6 +73,12 @@ async function getImageBlobsFromDescription(description) {
     }
 
     return images;
+}
+
+async function uploadImageUrlsToServer(description) {
+    const imageNames = await getImageBlobsFromDescription(description);
+
+    return imageNames.map(x => `https://dev.uintel.co.nz/ruru-public/3fH8zC5jQ1/images/${x}`);
 }
 
 
@@ -104,26 +112,6 @@ function replaceOtherLinksWithShorterLinks(description) {
     });
 }
 
-/* 
-Image blobs!
-
-const myToken = 'YOUR_PERSONAL_ACCESS_TOKEN';
-const apiUrl = 'https://api.github.com/repos/uintel/risk-explorer/assets/89552947/8d5dc35b-68bd-4711-aedc-528972c89abf';
-
-fetch(apiUrl, {
-  headers: {
-    Authorization: `Bearer ${myToken}`,
-  },
-})
-  .then(response => response.blob())
-  .then(blob => {
-    // Handle the image blob (e.g., display it, save it, etc.)
-    console.log('Image fetched successfully:', blob);
-  })
-  .catch(error => {
-    console.error('Error fetching image:', error);
-  });
-*/
 
 
 async function generateMessageContentForPullRequest(data) {
@@ -136,7 +124,7 @@ async function generateMessageContentForPullRequest(data) {
     let creator = data.pull_request.user.login;
     const slack_user = await getUserByGithubUsername(creator);
     if (slack_user) {
-        creator = slack_user.profile.first_name;
+        creator = `<@${slack_user.id}>`;
     }
     let sender = data.sender.login; // The person who did this data.action
     const slack_sender = await getUserByGithubUsername(sender);
@@ -198,15 +186,15 @@ async function generateMessageContentForPullRequest(data) {
     await persistent_pr_status.set('description', description); // I save this before closed on purpose, to keep the description in case it reopens
     if (data.action == 'closed') description = ''
 
-    /* const imageUrls = await uploadImageUrlsToSlack(description);
+    const imageUrls = await uploadImageUrlsToServer(description);
     await persistent_pr_status.set('image_ids', imageUrls);
     const slackImageBlocks = imageUrls.map(url => {
         return {
-            imageId: url.id,
+            imageUrl: url,
             altText: 'image'
         }
     })
-    console.log(slackImageBlocks, imageUrls, 'image urls') */
+    console.log(slackImageBlocks, imageUrls, 'image urls') 
     description = replaceImagesWithWords(description);
     description = replaceOtherLinksWithShorterLinks(description);
 
@@ -233,13 +221,14 @@ async function generateMessageContentForPullRequest(data) {
 ${description}`,
         accessory: button
     })
-    .addContext({
+
+    // Add image blocks
+    slackImageBlocks.forEach(block => bmb.addImage(block));
+
+    bmb.addContext({
         text: `PR by ${creator} |  *${status}*  |  ${action_summary}  |  ${repo_url}`
     })
     .addDivider()
-
-    // Add image blocks
-    //slackImageBlocks.forEach(block => bmb.addSlackImage(block));
     
     if (data.pull_request.merged_at) {
         // It's been merged!

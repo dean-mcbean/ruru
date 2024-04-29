@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "nodemon ./bin/www"
+    "dev": "nodemon --ignore ./public/ ./bin/www"
   },
   "dependencies": {
     "@slack/web-api": "^6.9.1",
