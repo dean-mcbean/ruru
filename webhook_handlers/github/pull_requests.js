@@ -45,6 +45,17 @@ const handlePullRequestEvent = async (data) => {
     if (slack_user && data.pull_request.user.login !== data.sender.login) {
         await notifyUserOnPRUpdate(slack_user, data);
     }
+    
+    // If PR was merged, add to the dev stage's known PRs
+    if (data.pull_request.merged && data.pull_request.base.ref === 'main') {
+        const devStage = await usePersistentItem('projects', data.pull_request.head.repo.name, 'stages', 'dev');
+        const devStageValue = await devStage.get();
+        await devStage.set('prs', [...(devStageValue.prs ?? []), {
+            title: data.pull_request.title,
+            url: data.pull_request.html_url,
+            user: data.pull_request.user.login,
+        }]);
+    }
 }
 
 const handleIssuePullRequestEvent = async (data) => {

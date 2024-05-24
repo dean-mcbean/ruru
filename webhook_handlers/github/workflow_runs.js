@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+const { downloadArtifact } = require("../../git_utils/artifacts");
 const sendMessage = require("../../slack_dispatch/send_message");
 const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
 const { usePersistentItem } = require("../../storage_utils/persistent_item");
@@ -13,6 +15,16 @@ const handleWorkflowRunEvent = async (data) => {
     DeployToDev: 'dev',
     DeployToTest: 'test',
     DeployToApps: 'apps',
+  }[data.workflow_run.name];
+
+  if (!stage) {
+    return;
+  }
+
+  const previousStage = {
+    DeployToDev: undefined,
+    DeployToTest: 'dev',
+    DeployToApps: 'test',
   }[data.workflow_run.name];
 
   const project = data.repository.name;
@@ -32,23 +44,32 @@ const handleWorkflowRunEvent = async (data) => {
     console.log('Workflow Completed:', await workflowStatus.get());
 
     const rexStages = await usePersistentItem('projects', project, 'stages');
+    const rexStagesValue = await rexStages.get();
 
     const updatedDate = new Date(data.workflow_run.updated_at);
     const formattedDate = updatedDate.toLocaleString('en-NZ', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
     });
     
     if (workflowStatusValue) {
+      console.log('Workflow Status:', workflowStatusValue);
+      console.log(rexStagesValue)
+      console.log(previousStage)
       await rexStages.set(workflowStatusValue.stage, {
         last_workflow_run: formattedDate,
         ran_by: data.sender.login,
-        version: workflowStatusValue.version
+        version: rexStagesValue[workflowStatusValue.stage] ? rexStagesValue[workflowStatusValue.stage].version : 'Unknown',
+        prs: [...(rexStagesValue[previousStage] && rexStagesValue[previousStage].prs ? rexStagesValue[previousStage].prs : []), ...(rexStagesValue[stage].prs ? rexStagesValue[stage].prs : [])]
       });
+
+      console.log(rexStagesValue)
+      if (rexStagesValue[previousStage] && rexStagesValue[previousStage].prs) {
+        await rexStages.set(previousStage, {
+          ...rexStagesValue[previousStage],
+          prs: []
+        });
+      }
     }
   }
 }
@@ -72,29 +93,49 @@ const updateStageVersion = async (data) => {
   const rexStages = await usePersistentItem('projects', repo, 'stages');
   const rexStagesValue = await rexStages.get();
 
-  if (rexStagesValue) {
+  if (rexStagesValue && rexStagesValue[stage]) {
     await rexStages.set(stage, {
       last_workflow_run: rexStagesValue[stage].last_workflow_run,
       ran_by: rexStagesValue[stage].ran_by,
+      version
+    });
+  } else {
+    await rexStages.set(stage, {
+      last_workflow_run: 'Unknown',
+      ran_by: 'Unknown',
       version
     });
   }
 }
 
 function formatTestResults(testJson) {
-  if (!testJson || !testJson.stats) return ' - Unknown error occurred';
+  if (!testJson || !testJson.stats) return ' - Unknown error occurred\n';
   let result = '';
-  if (testJson.stats.expected > 0) result += ` - ${testJson.stats.expected} tests passed`;
-  if (testJson.stats.unexpected > 0) result += ` - ${testJson.stats.unexpected} tests failed`;
-  if (testJson.stats.skipped > 0) result += ` - ${testJson.stats.skipped} tests skipped`;
-  if (testJson.stats.flaky > 0) result += ` - ${testJson.stats.flaky} tests were flaky`;
+  if (testJson.stats.expected > 0) result += ` - ${testJson.stats.expected} tests passed\n`;
+  if (testJson.stats.unexpected > 0) result += ` - ${testJson.stats.unexpected} tests failed\n`;
+  if (testJson.stats.skipped > 0) result += ` - ${testJson.stats.skipped} tests skipped\n`;
+  if (testJson.stats.flaky > 0) result += ` - ${testJson.stats.flaky} tests were flaky\n`;
   return result;
 }
 
-const handlePlaywrightTestEvent = async (data, triggering_workflow) => {
-  if (data === 'WorkflowFailed') {
+const handlePlaywrightTestEvent = async (data, triggering_workflow, workflow_id) => {
+  const filePath = 'public/data/last-playwright-test.json';
+
+  fs.writeFile(filePath, JSON.stringify(data), (err) => {
+    if (err) {
+      console.error('Error writing JSON file:', err);
+    } else {
+      console.log('JSON file saved successfully');
+    }
+  });
+
+  console.log(workflow_id,triggering_workflow)
+
+  await downloadArtifact(workflow_id, 'playwright-report', 'risk-explorer');
+  return
+  /* if (data === 'WorkflowFailed') {
     const blocks = new BlockMessageBuilder();
-    blocks.addHeader({text: `*Workflow "${triggering_workflow}" Failed!*`});
+    blocks.addHeader({text: `:mild_panic: *Workflow "${triggering_workflow}" Failed!*`});
     await sendMessage({
       channel: process.env.DEV_CHAT_CHANNELID, 
       blocks: blocks.build(),
@@ -115,12 +156,14 @@ const handlePlaywrightTestEvent = async (data, triggering_workflow) => {
 
   const shouldSend = !data || !data.stats || data.stats.unexpected > 0 || data.stats.flaky > 0;
 
+  await downloadArtifact(workflow_id, 'playwright-report', 'risk-explorer');
+
   
   if (shouldSend) {
     const message = formatTestResults(data);
   
     const blocks = new BlockMessageBuilder();
-    blocks.addSection({text: `*Playwright Tests Failed for workflow ${triggering_workflow}*`});
+    blocks.addSection({text: `:mild_panic: *Playwright Tests Failed for workflow ${triggering_workflow}*`});
     blocks.addSection({text: message});
   
     // Send message to slack
@@ -129,7 +172,9 @@ const handlePlaywrightTestEvent = async (data, triggering_workflow) => {
       blocks: blocks.build(),
       text: `Playwright Tests Failed!`
     })
-  }/*  else {
+  } */
+  
+  /*  else {
     const blocks = new BlockMessageBuilder();
     blocks.addSection({text: `*Playwright Tests Passed for workflow ${triggering_workflow}*`});
     

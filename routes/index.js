@@ -11,16 +11,13 @@ var router = express.Router();
 router.post('/', async (req, res, next) => {
   res.status(400)
 
+
   // Pass to relevant webhook handler
   if (req.query.source === 'playwright') {
     console.log(req.query)
-    await handlePlaywrightTestEvent(req.body, req.query.triggering_workflow)
+    await handlePlaywrightTestEvent(req.body, req.query.triggering_workflow, req.query.workflow_id)
     res.status(200)
 
-  } else if (req.body.type === 'update_version') {
-    await updateStageVersion(req.body)
-    res.status(200)
-    
   } else if (req.body.pull_request) {
     await handlePullRequestEvent(req.body)
     res.status(200)
@@ -52,6 +49,30 @@ router.post('/', async (req, res, next) => {
   res.send();
 });
 
+// eslint-disable-next-line no-unused-vars
+router.post('/curl/', async (req, res, next) => {
+  res.status(400)
+
+  console.log(req.body)
+  let data = req.body
+
+  if (!data.type) {
+    const jsonString = Object.keys(req.body)[0];
+    // Parse the JSON string into an object
+    data = JSON.parse(jsonString);
+  }
+
+  console.log(data)
+
+  if (data.type === 'update_version') {
+    await updateStageVersion(data)
+    res.status(200)
+  }
+
+  res.send();
+})
+
+
 /* POST from slack. */
 // eslint-disable-next-line no-unused-vars
 router.post('/slack/', async (req, res, next) => {
@@ -66,7 +87,7 @@ router.post('/slack/', async (req, res, next) => {
     } else if (result) {
       res.status(200);
     } else {
-      res.status(401);
+      res.status(200);
     }
   }
   res.send();
