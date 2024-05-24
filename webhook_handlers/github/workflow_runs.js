@@ -119,21 +119,7 @@ function formatTestResults(testJson) {
 }
 
 const handlePlaywrightTestEvent = async (data, triggering_workflow, workflow_id) => {
-  const filePath = 'public/data/last-playwright-test.json';
-
-  fs.writeFile(filePath, JSON.stringify(data), (err) => {
-    if (err) {
-      console.error('Error writing JSON file:', err);
-    } else {
-      console.log('JSON file saved successfully');
-    }
-  });
-
-  console.log(workflow_id,triggering_workflow)
-
-  await downloadArtifact(workflow_id, 'playwright-report', 'risk-explorer');
-  return
-  /* if (data === 'WorkflowFailed') {
+  if (data === 'WorkflowFailed') {
     const blocks = new BlockMessageBuilder();
     blocks.addHeader({text: `:mild_panic: *Workflow "${triggering_workflow}" Failed!*`});
     await sendMessage({
@@ -172,7 +158,7 @@ const handlePlaywrightTestEvent = async (data, triggering_workflow, workflow_id)
       blocks: blocks.build(),
       text: `Playwright Tests Failed!`
     })
-  } */
+  }
   
   /*  else {
     const blocks = new BlockMessageBuilder();
