@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 const { downloadArtifact } = require("../../git_utils/artifacts");
 const sendMessage = require("../../slack_dispatch/send_message");
-const { BlockMessageBuilder } = require("../../slack_utils/message_blocks");
+const { BlockMessageBuilder, createButtonBlock } = require("../../slack_utils/message_blocks");
 const { usePersistentItem } = require("../../storage_utils/persistent_item");
 const fs = require('fs');
 
@@ -149,7 +149,11 @@ const handlePlaywrightTestEvent = async (data, triggering_workflow, workflow_id)
     const message = formatTestResults(data);
   
     const blocks = new BlockMessageBuilder();
-    blocks.addSection({text: `:mild_panic: *Playwright Tests Failed for workflow ${triggering_workflow}*`});
+    blocks.addSection({text: `:mild_panic: *Playwright Tests Failed for workflow ${triggering_workflow}*`,
+      accessory: createButtonBlock({
+        text: `:ruru-test: View Report`,
+        url: `https://dev.uintel.co.nz/ruru-public/3fH8zC5jQ1/hosted/playwright-report/`
+    })});
     blocks.addSection({text: message});
   
     // Send message to slack
