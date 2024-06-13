@@ -38,6 +38,9 @@ async function downloadArtifact(workflow_run_id, artifact_name, repo) {
   const fs = require('fs');
   fs.writeFileSync(`./public/${artifact_name}.zip`, downloadResponse.data);
 
+  //Delete the existing directory
+  fs.rmdirSync(`./public/hosted/${artifact_name}`, { recursive: true });
+
   // Unzip the artifact
   const unzipper = require('unzipper');
   const stream = require('stream');

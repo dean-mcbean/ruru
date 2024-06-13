@@ -54,8 +54,7 @@ const handleWorkflowRunEvent = async (data) => {
     
     if (workflowStatusValue) {
       console.log('Workflow Status:', workflowStatusValue);
-      console.log(rexStagesValue)
-      console.log(previousStage)
+      console.log('a',rexStagesValue)
       await rexStages.set(workflowStatusValue.stage, {
         last_workflow_run: formattedDate,
         ran_by: data.sender.login,
@@ -63,7 +62,6 @@ const handleWorkflowRunEvent = async (data) => {
         prs: [...(rexStagesValue[previousStage] && rexStagesValue[previousStage].prs ? rexStagesValue[previousStage].prs : []), ...(rexStagesValue[stage].prs ? rexStagesValue[stage].prs : [])]
       });
 
-      console.log(rexStagesValue)
       if (rexStagesValue[previousStage] && rexStagesValue[previousStage].prs) {
         await rexStages.set(previousStage, {
           ...rexStagesValue[previousStage],
@@ -95,15 +93,15 @@ const updateStageVersion = async (data) => {
 
   if (rexStagesValue && rexStagesValue[stage]) {
     await rexStages.set(stage, {
-      last_workflow_run: rexStagesValue[stage].last_workflow_run,
-      ran_by: rexStagesValue[stage].ran_by,
+      ...rexStagesValue[stage],
       version
     });
   } else {
     await rexStages.set(stage, {
       last_workflow_run: 'Unknown',
       ran_by: 'Unknown',
-      version
+      version,
+      prs: []
     });
   }
 }
