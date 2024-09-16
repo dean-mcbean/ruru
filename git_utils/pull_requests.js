@@ -194,7 +194,6 @@ async function generateMessageContentForPullRequest(data) {
             altText: 'image'
         }
     })
-    console.log(slackImageBlocks, imageUrls, 'image urls') 
     description = replaceImagesWithWords(description);
     description = replaceOtherLinksWithShorterLinks(description);
 
@@ -243,4 +242,24 @@ ${description}`,
     return bmb.build();
 }
 
-module.exports = { generateMessageContentForPullRequest }
+
+async function fetchRecentlyMergedPRs(repo) {
+    // Fetches recently merged PRs
+    // This is a placeholder for a future implementation
+    const url = `https://api.github.com/repos/uintel/${repo}/pulls?state=closed&base=main&per_page=100`;
+    const response = await axios.get(url, {
+        headers: {
+            Authorization: `token ${process.env.GITHUB_TOKEN}`,
+        },
+    });
+    const mergedPRs = response.data.filter(pr => pr.merged_at);
+    
+    return mergedPRs.map(pr => ({
+        title: pr.title,
+        user: pr.user.login,
+        merged_at: new Date(pr.merged_at),
+        url: pr.html_url
+    }));
+}
+
+module.exports = { generateMessageContentForPullRequest, fetchRecentlyMergedPRs }

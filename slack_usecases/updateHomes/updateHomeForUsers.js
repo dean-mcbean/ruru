@@ -3,9 +3,17 @@ const { createCollectionListener } = require("../../storage_utils/persistent_ite
 const { updateHomeForAnalysts } = require("./updateHomeForAnalysts");
 const { updateHomeForDevs } = require("./updateHomeForDevs");
 
+let lastRun = 0
+
 async function updateHomeForAllUsers() {
+  if (new Date().getTime() - lastRun < 500) {
+    console.log('Skipping home update for all users as it was run in the last 500ms')
+    return
+  }
+  console.log('Updating home for all users')
   await updateHomeForDevs()
   await updateHomeForAnalysts()
+  lastRun = new Date().getTime()
 }
 
 createCollectionListener('projects', updateHomeForAllUsers)

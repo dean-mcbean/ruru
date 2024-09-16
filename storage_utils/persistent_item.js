@@ -1,6 +1,6 @@
 const { MongoClient } = require("mongodb");
 
-const client = new MongoClient(process.env.MONGO_CONNECTION_STRING, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(process.env.MONGO_CONNECTION_STRING, { useUnifiedTopology: true });
 const ruruDB = client.db("ruru");
 
 const collectionListeners = {};

@@ -1,6 +1,7 @@
 const { usePersistentItem } = require("../../storage_utils/persistent_item");
 const { bindAction } = require("../../webhook_handlers/slack/action_handler");
 const { openUserSettings } = require("../../webhook_handlers/slack/actions/user_settings");
+const { openPatchNotes } = require("../../webhook_handlers/slack/actions/patch_notes");
 const { capitalize, createButtonBlock } = require("../message_blocks");
 
 const projectsToTrack = ['risk-explorer', 'explorer-api']
@@ -20,7 +21,9 @@ function convertLastDatetime (datetime) {
   });
 }
 
-async function defaultHomeForDev({user_name, bmb}) {
+async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
+  if (!sortedPRs) return bmb.addSection({
+    text: `*Welcome, ${capitalize(user_name)}! I've been told you're a developer, but it looks like you're not!*`})
   
   bmb.addSection({
     text: `*Welcome, ${capitalize(user_name)} the Developer!*`,
@@ -29,33 +32,39 @@ async function defaultHomeForDev({user_name, bmb}) {
       action_id: bindAction(`openUserSettings`, openUserSettings)
     })
   })
+  .addSection({
+    text: ` `,
+    accessory: createButtonBlock({
+      text: `:clipboard: Your PRs`,
+      action_id: bindAction(`openPatchNotes`, openPatchNotes)
+    })
+  })
   .addPadding({padding: 1})
-  .addDivider()
+  .addDivider();
 
   for (const project of projectsToTrack) {
     const stages = await usePersistentItem('projects', project, 'stages');
     const stages_value = await stages.get();
 
-    if (stages_value && Object.keys(stages_value).length > 0) {
+    if (sortedDeploys[project] && sortedPRs[project]) {
       bmb.addHeader({
         text: `${capitalize(project)} Status`
       });
       for (const stage of stagesToTrack) {
-        if (!stages_value[stage]) {
-          stages_value[stage] = {
-            last_workflow_run: 'Never',
-            ran_by: 'N/A',
-            version: 'Unknown'
-          }
+        let lastDeploy = 'Never';
+        let ranBy = 'N/A';
+        let version = 'Unknown';
+        if (sortedDeploys[project][stage]) {
+          ranBy = sortedDeploys[project][stage].ran_by;
+          lastDeploy = convertLastDatetime(`${sortedDeploys[project][stage].created_at}`);
         }
-        // convert last_workflow_run into a human readable "time ago" format
-        
-        const timeAgo = convertLastDatetime(stages_value[stage].last_workflow_run);
-        const hasprs = stages_value[stage].prs && stages_value[stage].prs.length > 0
+        if (stages_value[stage]) {
+          version = stages_value[stage].version;
+        }
+
+        const hasprs = sortedPRs[project] && sortedPRs[project][stage].length > 0
         bmb.addSection({
-          text: `*${stageEmojis[stage]}  ${capitalize(stage)}*       :ruru-version: ${stages_value[stage].version}    :ruru-clock: ${timeAgo}    :ruru-user: ${stages_value[stage].ran_by}
-  
-${hasprs ? stages_value[stage].prs.map(pr => `      :ruru-pull-request:  <${pr.url}|${pr.title}> - ${pr.user}`).join('\n') : ''}
+          text: `*${stageEmojis[stage]}  ${capitalize(stage)}*       :ruru-version: ${version}    :ruru-clock: ${lastDeploy}    :ruru-user: ${ranBy}
 `,
           accessory: (stage !== 'dev' ? createButtonBlock({
             text: `:ruru-deploy:`,
@@ -68,6 +77,21 @@ ${hasprs ? stages_value[stage].prs.map(pr => `      :ruru-pull-request:  <${pr.u
             }) */
           }) : undefined)
         });
+        const prs = sortedPRs[project][stage];
+        let currentDate = '';
+        for (let i = 0; i < prs.length; i += 10) {
+          const prBatch = prs.slice(i, i + 10);
+          let prText = ''
+          for (const pr of prBatch) {
+            const date = convertLastDatetime(`${pr.merged_at}`)
+            prText += `${date !== currentDate ? date : '.          '}  :ruru-pull-request:  <${pr.url}|${pr.title}> - ${pr.user}\n`;
+            currentDate = date
+          }
+          bmb.addSection({
+            text: prText
+          });
+        }
+
         if (hasprs) {
           bmb.addPadding({padding: 6})
         }
