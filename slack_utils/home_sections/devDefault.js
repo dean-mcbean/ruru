@@ -4,7 +4,7 @@ const { openUserSettings } = require("../../webhook_handlers/slack/actions/user_
 const { openPatchNotes } = require("../../webhook_handlers/slack/actions/patch_notes");
 const { capitalize, createButtonBlock } = require("../message_blocks");
 
-const projectsToTrack = ['risk-explorer', 'explorer-api']
+const projectsToTrack = ['risk-explorer', 'explorer-api', 'access-explorer']
 const stagesToTrack = ['dev', 'test', 'apps']
 const stageEmojis = {
   dev: ':construction:',
