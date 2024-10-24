@@ -4,6 +4,7 @@ const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
+const sendMessage = require('../slack_dispatch/send_message');
 var router = express.Router();
 
 /* POST from git. */
@@ -92,5 +93,17 @@ router.post('/slack/', async (req, res, next) => {
   }
   res.send();
 });
+
+/* POST from slack. */
+// eslint-disable-next-line no-unused-vars
+router.post('/pipeline/', async (req, res, next) => {
+  res.status(400)
+  const data = JSON.parse(req.body.payload)
+
+  sendMessage(process.env.DEV_CHAT_CHANNELID, JSON.stringify(data))
+  
+  res.send();
+});
+
 
 module.exports = router;
