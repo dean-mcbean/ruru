@@ -7,7 +7,7 @@ async function getDevUsers() {
   let db_users = []
   for (const user of users) {
     const db_user = await getUserBySlackId(user.id);
-    db_users.push(db_user)
+    if (db_user) db_users.push(db_user)
   }
   return db_users;
 }
@@ -17,7 +17,7 @@ async function getAnalystUsers() {
   let db_users = []
   for (const user of users) {
     const db_user = await getUserBySlackId(user.id);
-    db_users.push(db_user)
+    if (db_user) db_users.push(db_user)
   }
   return db_users;
 }

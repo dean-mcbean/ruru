@@ -16,6 +16,7 @@ async function updateHomeForAllUsers() {
   lastRun = new Date().getTime()
 }
 
+createCollectionListener('pipeline', updateHomeForAllUsers)
 createCollectionListener('projects', updateHomeForAllUsers)
 createCollectionListener('workflows', updateHomeForAllUsers)
 createCollectionListener('user_config', updateHomeForAllUsers)

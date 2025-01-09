@@ -29,6 +29,7 @@ async function buildHomeForAnalyst({user_name, user_id}) {
 async function updateHomeForAnalysts() {
   const analyst_users = await getAnalystUsers()
   analyst_users.forEach(async (user) => {
+    if (!user) return
     await updateHome({
       user_id: user.id,
       blocks: await buildHomeForAnalyst({

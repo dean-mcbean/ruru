@@ -4,7 +4,7 @@ const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
-const sendMessage = require('../slack_dispatch/send_message');
+const { usePersistentItem } = require("../storage_utils/persistent_item");
 var router = express.Router();
 
 /* POST from git. */
@@ -98,11 +98,24 @@ router.post('/slack/', async (req, res, next) => {
 // eslint-disable-next-line no-unused-vars
 router.post('/pipeline/', async (req, res, next) => {
   res.status(400)
-  const data = JSON.parse(req.body.payload)
+  const pipelineStatus = await usePersistentItem('pipeline', 'status');
+  await pipelineStatus.set(req.body.client, {
+    status: req.body.event,
+    lastUpdated: new Date().getTime()
+    });
 
-  sendMessage(process.env.DEV_CHAT_CHANNELID, JSON.stringify(data))
+ /*  const bmb = new BlockMessageBuilder();
+  bmb.addSection({
+    text: `:sparkles:  *Test:  \`${JSON.stringify(req.body)}\`*`
+  });
+  bmb.addDivider();
+  await sendMessage({
+    channel: process.env.DEV_CHAT_CHANNELID, 
+    blocks: bmb.build(),
+    text: `Test!`
+  }) */
   
-  res.send();
+  res.status(200).send();
 });
 
 

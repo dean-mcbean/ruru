@@ -18,9 +18,10 @@ const addReviewerToPullRequest = async (action, data) => {
     pr_status_value.message_blocks[0].text.text = pr_status_value.message_blocks[0].text.text.replace(/\|:([^:]+):/g, `|:eyes:`);
 
     // Update the recent action summary
-    const split_context = pr_status_value.message_blocks[1].elements[0].text.split('|');
+    const context_index = pr_status_value.message_blocks.findIndex(b => b.type == 'context');
+    const split_context = pr_status_value.message_blocks[context_index].elements[0].text.split('|');
     pr_status_value.action_summary = `Under Review by ${data.user.name}`;
-    pr_status_value.message_blocks[1].elements[0].text = split_context[0] + '|' + split_context[1] + `|  Under Review by ${data.user.name}  |` + split_context[2];
+    pr_status_value.message_blocks[context_index].elements[0].text = split_context[0] + '|' + split_context[1] + `|  Under Review by ${data.user.name}  |` + split_context[2];
     
     await pr_status.set(pr_status_value);
 

@@ -21,7 +21,7 @@ const handleNewBranchEvent = async (data) => {
         }
     } else if (analyst_repos.includes(data.repository.name)) {
         for (const user of analyst_users) {
-            if (user.id !== slack_user.id) {
+            if (!slack_user || user.id !== slack_user.id) {
                 await notifyUserOnNewBranch(user, data);
             }
         }

@@ -25,6 +25,8 @@ async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
   if (!sortedPRs) return bmb.addSection({
     text: `*Welcome, ${capitalize(user_name)}! I've been told you're a developer, but it looks like you're not!*`})
   
+  const pipelineStatus = await usePersistentItem('pipeline', 'status');
+  const pipelineStatusValue = await pipelineStatus.get();
   bmb.addSection({
     text: `*Welcome, ${capitalize(user_name)} the Developer!*`,
     accessory: createButtonBlock({
@@ -33,7 +35,14 @@ async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
     })
   })
   .addSection({
-    text: ` `,
+    text: `*Pipeline Status*${
+      pipelineStatusValue ? 
+      Object.entries(pipelineStatusValue).reduce((acc, [key, value]) => 
+        key !== '_id' ? `${acc}\n ● *${key}:* ${value.status} (${new Date(value.lastUpdated).toLocaleString()})` : acc, ''
+      )
+       : 
+      '_No pipeline status has been recorded_'
+    }`,
     accessory: createButtonBlock({
       text: `:clipboard: Your PRs`,
       action_id: bindAction(`openPatchNotes`, openPatchNotes)
@@ -41,6 +50,8 @@ async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
   })
   .addPadding({padding: 1})
   .addDivider();
+  
+
 
   for (const project of projectsToTrack) {
     const stages = await usePersistentItem('projects', project, 'stages');
