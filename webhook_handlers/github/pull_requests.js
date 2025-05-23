@@ -25,6 +25,7 @@ const handlePullRequestEvent = async (data) => {
             blocks: await generateMessageContentForPullRequest(data),
             text: `New PR by ${data.pull_request.user.login} in ${data.pull_request.head.repo.name}`
         })
+        if (!result) return;
         await messageInfo.set({
             channel: result.channel,
             ts: result.ts
@@ -50,16 +51,11 @@ const handlePullRequestEvent = async (data) => {
     if (data.pull_request.merged && data.pull_request.base.ref === 'main') {
         const devStage = await usePersistentItem('projects', data.pull_request.head.repo.name, 'stages', 'dev');
         const devStageValue = await devStage.get();
-        console.log("SETTING PRS",devStageValue.prs,[...(devStageValue.prs ?? []), {
-            title: data.pull_request.title,
-            url: data.pull_request.html_url,
-            user: data.pull_request.user.login,
-        }])
-        await devStage.set('prs', [...(devStageValue.prs ?? []), {
-            title: data.pull_request.title,
-            url: data.pull_request.html_url,
-            user: data.pull_request.user.login,
-        }]);
+        await devStage.set('prs', [...(devStageValue?.prs ?? []), {
+                title: data.pull_request.title,
+                url: data.pull_request.html_url,
+                user: data.pull_request.user.login,
+            }]);
     }
 }
 

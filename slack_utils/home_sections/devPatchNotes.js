@@ -2,7 +2,7 @@ const { bindAction } = require("../../webhook_handlers/slack/action_handler");
 const { capitalize } = require("../message_blocks");
 const { backToDefault } = require("../../webhook_handlers/slack/actions/back_to_default");
 
-const projectsToTrack = ['risk-explorer', 'explorer-api', 'access-explorer', 'terraform-aws']
+const projectsToTrack = ['risk-explorer', 'explorer-api', 'access-explorer', 'terraform-aws', 'cms']
 const stagesToTrack = ['dev', 'test', 'apps']
 const stageEmojis = {
   dev: ':construction:',

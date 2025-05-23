@@ -78,7 +78,7 @@ async function getImageBlobsFromDescription(description) {
 async function uploadImageUrlsToServer(description) {
     const imageNames = await getImageBlobsFromDescription(description);
 
-    return imageNames.map(x => `https://dev.uintel.co.nz/ruru-public/3fH8zC5jQ1/images/${x}`);
+    return imageNames.map(x => `https://ruru.uintel.co.nz/ruru-public/3fH8zC5jQ1/images/${x}`);
 }
 
 

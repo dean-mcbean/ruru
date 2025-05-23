@@ -2,6 +2,7 @@ var express = require('express');
 const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion, handlePlaywrightTestEvent } = require('../webhook_handlers/github/workflow_runs');
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
+const { handleSessionCall } = require('../webhook_handlers/explorer-api/sessions');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
 const { usePersistentItem } = require("../storage_utils/persistent_item");
@@ -116,6 +117,13 @@ router.post('/pipeline/', async (req, res, next) => {
   }) */
   
   res.status(200).send();
+});
+
+/* POST from explorer api. */
+// eslint-disable-next-line no-unused-vars
+router.post('/api/', async (req, res, next) => {
+  res.status(400)
+  await handleSessionCall(req, res)
 });
 
 

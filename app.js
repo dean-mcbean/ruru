@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+// var { updateStoredUsers } = require('./slack_usecases/updateStoredUsers');
 
 var indexRouter = require('./routes/index');
 const updateHomeForAllUsers = require('./slack_usecases/updateHomes/updateHomeForUsers');
@@ -40,7 +41,7 @@ function initApp() {
   // eslint-disable-next-line no-console
     console.log('>>> Initializing the app!');
     console.log('\t>>> Loading User Info...');
-    //updateStoredUsers() This exceeds the rate limit for the Slack API
+    // updateStoredUsers() //This exceeds the rate limit for the Slack API
     console.log('\t>>> Updating Home Pages...');
     updateHomeForAllUsers()
     console.log('>>> App Initialized!');

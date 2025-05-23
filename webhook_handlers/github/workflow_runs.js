@@ -150,7 +150,7 @@ const handlePlaywrightTestEvent = async (data, triggering_workflow, workflow_id)
     blocks.addSection({text: `:mild_panic: *Playwright Tests Failed for workflow ${triggering_workflow}*`,
       accessory: createButtonBlock({
         text: `:ruru-test: View Report`,
-        url: `https://dev.uintel.co.nz/ruru-public/3fH8zC5jQ1/hosted/playwright-report/`
+        url: `https://ruru.uintel.co.nz/ruru-public/3fH8zC5jQ1/hosted/playwright-report/`
     })});
     blocks.addSection({text: message});
   
