@@ -59,11 +59,23 @@ async function fetchAndConvertToBase64(url) {
 async function getImageBlobsFromDescription(description) {
     // Extracts image URLs from a description
     let imageUrls = [];
+    // Find markdown image URLs
     const sectionUrls = description.match(/!\[image\]\((https?:\/\/[^\s]+)\)/g);
     if (sectionUrls) {
-        imageUrls = sectionUrls.map(url => {
+        imageUrls.push(...sectionUrls.map(url => {
             return url.match(/!\[image\]\((https?:\/\/[^\s]+)\)/)[1];
-        });
+        }))
+    }
+
+    // Find HTML <img> src URLs
+    const htmlImgUrls = description.match(/<img[^>]*src=["'](https?:\/\/[^"']+)["'][^>]*>/g);
+    if (htmlImgUrls) {
+        imageUrls.push(...imageUrls.concat(
+            htmlImgUrls.map(tag => {
+                const match = tag.match(/src=["'](https?:\/\/[^"']+)["']/);
+                return match ? match[1] : null;
+            }).filter(Boolean)
+        ))
     }
 
     let images = [];
