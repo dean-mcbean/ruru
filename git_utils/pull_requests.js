@@ -114,6 +114,8 @@ function replaceImagesWithWords(description) {
     let index = 1;
     return description.replace(/!\[image\]\((https?:\/\/[^\s]+)\)/g, (match, url) => {
         return `<${url}|🖼️ (image)>`;
+    }).replace(/<img[^>]*src=["'](https?:\/\/[^"']+)["'][^>]*>/g, (match, url) => {
+        return `<${url}|🖼️ (image)>`;
     });
 }
 
