@@ -27,6 +27,7 @@ async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
   
   const pipelineStatus = await usePersistentItem('pipeline', 'status');
   const pipelineStatusValue = await pipelineStatus.get();
+  const sortedPipelines = Object.entries(pipelineStatusValue || {}).sort(([, a], [, b]) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
   bmb.addSection({
     text: `*Welcome, ${capitalize(user_name)} the Developer!*`,
     accessory: createButtonBlock({
@@ -37,7 +38,7 @@ async function defaultHomeForDev({user_name, bmb, sortedPRs, sortedDeploys}) {
   .addSection({
     text: `*Pipeline Status*${
       pipelineStatusValue ? 
-      Object.entries(pipelineStatusValue).reduce((acc, [key, value]) => 
+      sortedPipelines.reduce((acc, [key, value]) => 
         key !== '_id' ? `${acc}\n ● *${key}:* ${value.status} (${new Date(value.lastUpdated).toLocaleString()})` : acc, ''
       )
        : 

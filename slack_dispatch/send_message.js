@@ -6,7 +6,7 @@ const sendMessage = async ( message_arguments ) => {
     try {
         // Call the chat.postMessage method using the WebClient
         const result = await client.chat.postMessage({
-            text: "Placeholder text (Contact Dean if you see this)",
+            text: message_arguments.markdown_text ? undefined : "Placeholder text (Contact Dean if you see this)",
             mrkdwn: true,
             ...message_arguments
         });

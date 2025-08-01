@@ -1,10 +1,12 @@
-const axios = require('axios');
+/* const axios = require('axios');
 
 let lastRun = 0
 let lastWorkflows = []
-
-const getRecentActionRuns = async (repo) => {
-  if (new Date().getTime() - lastRun < 1000 * 60 * 5) {
+ */
+const getRecentActionRuns = async (/* repo */) => {
+  // DISABLED FOR THE MOMENT
+  return []
+/*   if (new Date().getTime() - lastRun < 1000 * 60 * 5) {
     console.log('Skipping loading workflows as it was run in the last 5 minutes')
     return [...lastWorkflows]
   }
@@ -39,7 +41,7 @@ const getRecentActionRuns = async (repo) => {
   console.log('Loading Workflows: 100%')
   lastWorkflows = [...workflow_runs]
   lastRun = new Date().getTime()
-  return workflow_runs;
+  return workflow_runs; */
 };
 
 module.exports = { getRecentActionRuns };

@@ -2,10 +2,10 @@ var express = require('express');
 const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion, handlePlaywrightTestEvent } = require('../webhook_handlers/github/workflow_runs');
 const { handleAction } = require('../webhook_handlers/slack/action_handler');
 const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
-const { handleSessionCall } = require('../webhook_handlers/explorer-api/sessions');
 const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
 const { usePersistentItem } = require("../storage_utils/persistent_item");
+const { logBug } = require('../motion_utils/log_bug');
 var router = express.Router();
 
 /* POST from git. */
@@ -82,14 +82,24 @@ router.post('/slack/', async (req, res, next) => {
   const data = JSON.parse(req.body.payload)
 
   // Pass actions to relevant webhook handler
-  for (const action of data.actions) {
-    const result = await handleAction(action.action_id, action, data)
-    if (typeof result === 'object') {
-      res.status(402).send(result);
-    } else if (result) {
-      res.status(200);
-    } else {
-      res.status(200);
+  if (data.type === 'message_action') {
+    if (data.callback_id === 'log_bug') {
+      logBug(data);
+      res.status(200).send({
+        text: 'Thank you for your bug report! We will look into it as soon as possible.',
+        response_type: 'ephemeral'
+      });
+    }
+  } else if (data.type === 'block_actions') {
+    for (const action of data.actions) {
+      const result = await handleAction(action.action_id, action, data)
+      if (typeof result === 'object') {
+        res.status(402).send(result);
+      } else if (result) {
+        res.status(200);
+      } else {
+        res.status(200);
+      }
     }
   }
   res.send();
@@ -104,26 +114,17 @@ router.post('/pipeline/', async (req, res, next) => {
     status: req.body.event,
     lastUpdated: new Date().getTime()
     });
-
- /*  const bmb = new BlockMessageBuilder();
-  bmb.addSection({
-    text: `:sparkles:  *Test:  \`${JSON.stringify(req.body)}\`*`
-  });
-  bmb.addDivider();
-  await sendMessage({
-    channel: process.env.DEV_CHAT_CHANNELID, 
-    blocks: bmb.build(),
-    text: `Test!`
-  }) */
   
   res.status(200).send();
 });
 
 /* POST from explorer api. */
+// Used to track usage of Rex, has now been replaced by datadog
+// Still kept with a 200 response for backwards compatibility
 // eslint-disable-next-line no-unused-vars
 router.post('/api/', async (req, res, next) => {
-  res.status(400)
-  await handleSessionCall(req, res)
+  res.status(200).send()
+  //await handleSessionCall(req, res)
 });
 
 
