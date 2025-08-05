@@ -6,6 +6,9 @@ const { handleIssueEvent } = require('../webhook_handlers/github/issues');
 const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
 const { usePersistentItem } = require("../storage_utils/persistent_item");
 const { logBug } = require('../motion_utils/log_bug');
+const { logFeedback } = require('../motion_utils/log_feedback');
+const { logDataError } = require('../motion_utils/log_data_error');
+const sendToResponseUrl = require('../slack_dispatch/send_response');
 var router = express.Router();
 
 /* POST from git. */
@@ -80,14 +83,26 @@ router.post('/curl/', async (req, res, next) => {
 router.post('/slack/', async (req, res, next) => {
   res.status(400)
   const data = JSON.parse(req.body.payload)
+  let response;
 
   // Pass actions to relevant webhook handler
   if (data.type === 'message_action') {
     if (data.callback_id === 'log_bug') {
-      logBug(data);
-      res.status(200).send({
-        text: 'Thank you for your bug report! We will look into it as soon as possible.',
-        response_type: 'ephemeral'
+      response = await logBug(data);
+      console.log('sending log bug response')
+      res.status(200);
+    } else if (data.callback_id === 'log_feedback') {
+      response = await logFeedback(data);
+      res.status(200);
+    } else if (data.callback_id === 'log_data_error') {
+      response = await logDataError(data);
+      res.status(200);
+    }
+
+    if (response) {
+      sendToResponseUrl(data.response_url, {
+        text: `<@${data.user.id}> ${response}`,
+        response_type: 'ephemeral',
       });
     }
   } else if (data.type === 'block_actions') {

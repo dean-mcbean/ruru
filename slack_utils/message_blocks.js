@@ -1,14 +1,30 @@
+function githubMarkdownToSlack(text) {
+  // Convert links: [text](url) => <url|text>
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '![$2]($1)');
+
+  // Convert headings: # Heading => *Heading*
+  text = text.replace(/^#{1,6}\s*(.+)$/gm, '*$1*');
+
+  // Convert task lists:
+  // - [x] Task => ☑ Task
+  // - [ ] Task => ☐ Task
+  text = text.replace(/^- \[x\] (.+)$/gim, '☑ $1');
+  text = text.replace(/^- \[ \] (.+)$/gim, '☐ $1');
+
+  return text;
+}
 
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function createSectionBlock({text, accessory = undefined}) {
+  const slackText = githubMarkdownToSlack(text);
   return {
     type: 'section',
     text: {
       type: 'mrkdwn',
-      text
+      text: slackText
     },
     accessory
   };
