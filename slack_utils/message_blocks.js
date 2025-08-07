@@ -1,6 +1,9 @@
 function githubMarkdownToSlack(text) {
-  // Convert links: [text](url) => <url|text>
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '![$2]($1)');
+  // Remove HTML comments: <!-- ... -->
+  text = text.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Convert links: [text](url) => ![text](url)
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<$2|$1>');
 
   // Convert headings: # Heading => *Heading*
   text = text.replace(/^#{1,6}\s*(.+)$/gm, '*$1*');
