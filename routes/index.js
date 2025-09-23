@@ -8,7 +8,9 @@ const { usePersistentItem } = require("../storage_utils/persistent_item");
 const { logBug } = require('../motion_utils/log_bug');
 const { logFeedback } = require('../motion_utils/log_feedback');
 const { logDataError } = require('../motion_utils/log_data_error');
+const { logEngineSuggestion } = require('../motion_utils/log_engine_suggestion');
 const sendToResponseUrl = require('../slack_dispatch/send_response');
+const { ensureBasecampToken } = require('../middleware/basecamp');
 var router = express.Router();
 
 /* POST from git. */
@@ -80,7 +82,7 @@ router.post('/curl/', async (req, res, next) => {
 
 /* POST from slack. */
 // eslint-disable-next-line no-unused-vars
-router.post('/slack/', async (req, res, next) => {
+router.post('/slack/', ensureBasecampToken, async (req, res, next) => {
   res.status(400)
   const data = JSON.parse(req.body.payload)
   let response;
@@ -88,14 +90,17 @@ router.post('/slack/', async (req, res, next) => {
   // Pass actions to relevant webhook handler
   if (data.type === 'message_action') {
     if (data.callback_id === 'log_bug') {
-      response = await logBug(data);
+      response = await logBug(data, req.basecampToken);
       console.log('sending log bug response')
       res.status(200);
     } else if (data.callback_id === 'log_feedback') {
-      response = await logFeedback(data);
+      response = await logFeedback(data, req.basecampToken);
       res.status(200);
     } else if (data.callback_id === 'log_data_error') {
-      response = await logDataError(data);
+      response = await logDataError(data, req.basecampToken);
+      res.status(200);
+    } else if (data.callback_id === 'log_engine_suggestion') {
+      response = await logEngineSuggestion(data, req.basecampToken);
       res.status(200);
     }
 
@@ -141,6 +146,5 @@ router.post('/api/', async (req, res, next) => {
   res.status(200).send()
   //await handleSessionCall(req, res)
 });
-
 
 module.exports = router;

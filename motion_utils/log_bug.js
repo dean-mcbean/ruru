@@ -45,8 +45,8 @@ const removeMarkdown = (text) => {
 }
 
 // Creates a motion task to log a bug report from Slack
-const logBug = async (data) => {
-  console.log('Bug Report: ', data)
+const logBug = async (data, basecampToken) => {
+  console.log('Bug Report: ', data, basecampToken)
   const { user, message, channel } = data;
   const { text } = message;
   const { id: channelId, name: channelName } = channel;
@@ -64,7 +64,8 @@ const logBug = async (data) => {
   // Send the bug report via Get to https://api.usemotion.com/v1/tasks
   const bugTitle = removeMarkdown(text.length > 96 ? `${text.substring(0, 96)}...` : text);
   const messageUrl = `https://urban-intelligence.slack.com/archives/${channelId}/p${message.ts.replace('.', '')}`;
-  axios.post('https://api.usemotion.com/v1/tasks', {
+
+  const motionPromise = axios.post('https://api.usemotion.com/v1/tasks', {
     name: `Bug: ${bugTitle}`,
     projectId: 'pr_9VMpAvGReCVL5FJ5exeb4A',
     workspaceId: 'agfySyofHpFf1yCycPaIj',
@@ -79,16 +80,32 @@ const logBug = async (data) => {
       'X-API-Key': `${process.env.MOTION_KEY}`,
       'Content-Type': 'application/json'
     }
-  }).then(response => {
-    console.log('Bug report logged successfully:', response.data);
-    const taskUrl = `https://app.usemotion.com/web/pm/workspaces/${response.data.workspace.id}?task=${response.data.id}`;
+  })
+  
+/*   const basecampPromise = axios.post('https://3.basecampapi.com/6024739/buckets/44023863/card_tables/columns/9083785777/cards.json', {
+    title: `Bug: ${bugTitle}`,
+    description: `Logged from Slack by ${user.name}\n\n${text}\n\nLink to Slack message: ${messageUrl}`,
+  }, {
+    headers: {
+      'Authorization': `Bearer ${basecampToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Ruru (dean.walker@urbanintelligence.com)'
+    }
+  }) */
+  
+  // Wait for both requests to complete
+  return Promise.all([motionPromise]).then(response => { //, basecampPromise
+    console.log('Bug report logged successfully:', response[0].data);
+    const taskUrl = `https://app.usemotion.com/web/pm/workspaces/${response[0].data.workspace.id}?task=${response[0].data.id}`;
+    const todoListUrl = response[1].data.app_url;
+    console.log('Basecamp todo list created successfully:', todoListUrl);
 
     // post a comment on the bug report in slack
     sendMessage({
       channel: channelId,
       thread_ts: message.ts,
       icon_emoji: ':ruru-test:',
-      markdown_text: `<@${user.id}> has logged this as a ![bug report.](${taskUrl})`,
+      markdown_text: `<@${user.id}> has logged this as a ![bug report.](${taskUrl}) ![Basecamp To-do List](${todoListUrl})`,
     }).then(response => {
       console.log('Bug report response sent successfully:', response.data);
     }).catch(error => {

@@ -14,6 +14,9 @@ function githubMarkdownToSlack(text) {
   text = text.replace(/^- \[x\] (.+)$/gim, '☑ $1');
   text = text.replace(/^- \[ \] (.+)$/gim, '☐ $1');
 
+  // Convert bullet points
+  text = text.replace(/^\s*-\s+(.*)$/gm, '• $1');
+
   return text;
 }
 
