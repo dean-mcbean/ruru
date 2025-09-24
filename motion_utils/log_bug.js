@@ -33,6 +33,8 @@ and MOTION_KEY is in .env, process.env.MOTION_KEY
 */
 const axios = require('axios');
 const sendMessage = require("../slack_dispatch/send_message");
+const getUser = require("../slack_dispatch/get_user");
+const getPeople = require("../basecamp_utils/get_people");
 
 const removeMarkdown = (text) => {
   // Remove common markdown characters
@@ -61,43 +63,35 @@ const logBug = async (data, basecampToken) => {
     return 'Sorry, I cannot log a bug report in a private group.';
   }
 
+  const userInfo = await getUser(user.id);
+  let userEmbed = user.name;
+  if (userInfo?.user?.profile?.email) {
+    const basecampUsers = await getPeople(basecampToken);
+    const matchedUser = basecampUsers.find(bcUser => bcUser.email_address?.toLowerCase() === userInfo.user.profile.email.toLowerCase());
+    if (matchedUser) {
+      userEmbed = `<bc-attachment sgid="${matchedUser.attachable_sgid}"></bc-attachment>`;
+    }
+  }
+
+  console.log("USERS", user, userInfo);
+
   // Send the bug report via Get to https://api.usemotion.com/v1/tasks
   const bugTitle = removeMarkdown(text.length > 96 ? `${text.substring(0, 96)}...` : text);
   const messageUrl = `https://urban-intelligence.slack.com/archives/${channelId}/p${message.ts.replace('.', '')}`;
-
-  const motionPromise = axios.post('https://api.usemotion.com/v1/tasks', {
-    name: `Bug: ${bugTitle}`,
-    projectId: 'pr_9VMpAvGReCVL5FJ5exeb4A',
-    workspaceId: 'agfySyofHpFf1yCycPaIj',
-    description: `[Reported in **#${channelName}** by ${user.name}](${messageUrl})\n\n${text}`,
-    dueDate: null,
-    status: 'To be prioritised',
-    labels: ['devs', 'Bug'],
-    duration: 'NONE',
-    assigneeId: 'hUnZVMH2U4OqvXLE5GynUFhkeXi2',
-  }, {
-    headers: {
-      'X-API-Key': `${process.env.MOTION_KEY}`,
-      'Content-Type': 'application/json'
-    }
-  })
   
-/*   const basecampPromise = axios.post('https://3.basecampapi.com/6024739/buckets/44023863/card_tables/columns/9083785777/cards.json', {
-    title: `Bug: ${bugTitle}`,
-    description: `Logged from Slack by ${user.name}\n\n${text}\n\nLink to Slack message: ${messageUrl}`,
-  }, {
-    headers: {
-      'Authorization': `Bearer ${basecampToken}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'Ruru (dean.walker@urbanintelligence.com)'
-    }
-  }) */
+  const basecampPromise = axios.post('https://3.basecampapi.com/6024739/buckets/44041429/card_tables/lists/9088297701/cards.json', {
+      title: `Bug: ${bugTitle}`,
+      content: `<em>Logged from <a href="${messageUrl}">Slack</a> by ${userEmbed}</em><br><br>${text}`,
+    }, {
+      headers: {
+        'Authorization': `Bearer ${basecampToken}`,
+        'Content-Type': 'application/json; charset=utf-8',
+        'User-Agent': 'Ruru (dean.walker@urbanintelligence.com)'
+      }
+    })
   
-  // Wait for both requests to complete
-  return Promise.all([motionPromise]).then(response => { //, basecampPromise
-    console.log('Bug report logged successfully:', response[0].data);
-    const taskUrl = `https://app.usemotion.com/web/pm/workspaces/${response[0].data.workspace.id}?task=${response[0].data.id}`;
-    const todoListUrl = response[1].data.app_url;
+  return basecampPromise.then(response => {
+    const todoListUrl = response.data.app_url;
     console.log('Basecamp todo list created successfully:', todoListUrl);
 
     // post a comment on the bug report in slack
@@ -105,9 +99,9 @@ const logBug = async (data, basecampToken) => {
       channel: channelId,
       thread_ts: message.ts,
       icon_emoji: ':ruru-test:',
-      markdown_text: `<@${user.id}> has logged this as a ![bug report.](${taskUrl}) ![Basecamp To-do List](${todoListUrl})`,
-    }).then(response => {
-      console.log('Bug report response sent successfully:', response.data);
+      markdown_text: `<@${user.id}> has logged this as a ![bug report.](${todoListUrl})`,
+    }).then(() => {
+      console.log('Bug report response sent successfully.');
     }).catch(error => {
       console.error('Error sending bug report response:', error);
     });
