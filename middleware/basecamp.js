@@ -18,9 +18,6 @@ async function ensureBasecampToken(req, res, next) {
 
       accessToken = response.data.access_token;
       expiresAt = response.data.expires_at;
-
-      console.log('🔑 Refreshed Basecamp token');
-      await sendDeanMessage(`🔑 Refreshed Basecamp token`);
     } catch (err) {
       console.error('❌ Failed to refresh Basecamp token:', err.message);
       await sendDeanMessage(`❌ Failed to refresh Basecamp token: ${err.message}`);
