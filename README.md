@@ -1,6 +1,18 @@
-Any questions, ask Dean.
+*Any questions, ask Dean.*
 
-***Rule of Thumb:***
-1. routes receive webhook posts (i.e. from github)
-2. these are passed to webhook handlers depending on what's received
-3. then slack usecases can be used to interact with slack
+## General Structure:
+1. `./dispatch` contains outgoing actions
+2. `./fetch` contains outgoing requests
+3. `./routes` handles incoming requests
+4. `./utils` contains reusable functions
+
+Most logic lies in the above folders.
+
+## Connections
+Ruru currently connects to six different services:
+ - Slack
+ - Github
+ - Motion
+ - Basecamp
+ - Runn
+ - ...and MongoDB (locally, for persistent storage)
