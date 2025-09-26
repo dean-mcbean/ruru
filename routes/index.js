@@ -13,6 +13,10 @@ const sendToResponseUrl = require('../dispatch/slack/send_response');
 const { ensureBasecampToken } = require('../middleware/basecamp');
 var router = express.Router();
 
+router.get('/', function(req, res) {
+  res.redirect('/dashboard');
+});
+
 /* POST from git. */
 // eslint-disable-next-line no-unused-vars
 router.post('/', async (req, res, next) => {

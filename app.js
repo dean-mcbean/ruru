@@ -10,13 +10,26 @@ var indexRouter = require('./routes/index');
 
 var app = express();
 
+app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/dashboard', (req, res, next) => {
+  const filePath = path.join(__dirname, '../dashboard/dist', req.path);
+  console.log(`[DEBUG] /dashboard requested: ${req.path} -> ${filePath}`);
+  next();
+});
+app.use('/dashboard', express.static(path.join(__dirname, './dashboard/dist')));
+
+// Optional: For SPA routing support
+app.get('/dashboard/*', (req, res) => {
+  res.sendFile(path.join(__dirname, './dashboard/dist/index.html'));
+});
 
 app.use('/', indexRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -34,6 +47,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+
 
 function initApp() {
   // Initialize the app
