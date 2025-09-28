@@ -17,6 +17,8 @@ router.get('/', function(req, res) {
   res.redirect('/dashboard');
 });
 
+router.use('/dash-api', require('./dashboard/index'));
+
 /* POST from git. */
 // eslint-disable-next-line no-unused-vars
 router.post('/', async (req, res, next) => {
