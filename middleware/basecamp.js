@@ -1,5 +1,5 @@
 var axios = require('axios');
-var sendDeanMessage = require('../slack_dispatch/dm_dean');
+var sendDeanMessage = require('../dispatch/slack/dm_dean');
 
 let accessToken = null;
 let expiresAt = null;

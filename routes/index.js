@@ -1,15 +1,15 @@
 var express = require('express');
-const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion, handlePlaywrightTestEvent } = require('../webhook_handlers/github/workflow_runs');
-const { handleAction } = require('../webhook_handlers/slack/action_handler');
-const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('../webhook_handlers/github/pull_requests');
-const { handleIssueEvent } = require('../webhook_handlers/github/issues');
-const { handleNewBranchEvent } = require('../webhook_handlers/github/new_branch');
-const { usePersistentItem } = require("../storage_utils/persistent_item");
-const { logBug } = require('../motion_utils/log_bug');
-const { logFeedback } = require('../motion_utils/log_feedback');
-const { logDataError } = require('../motion_utils/log_data_error');
-const { logEngineSuggestion } = require('../motion_utils/log_engine_suggestion');
-const sendToResponseUrl = require('../slack_dispatch/send_response');
+const { handleWorkflowRunEvent, handleWorkflowBotPushEvent, updateStageVersion, handlePlaywrightTestEvent } = require('./github/workflow_runs');
+const { handleAction } = require('../utils/slack/message_blocks/action_handler');
+const { handleIssuePullRequestEvent, handlePullRequestEvent } = require('./github/pull_requests');
+const { handleIssueEvent } = require('./github/issues');
+const { handleNewBranchEvent } = require('./github/new_branch');
+const { usePersistentItem } = require("../utils/mongodb/persistent_item");
+const { logBug } = require('./slack/message_action/log_bug');
+const { logFeedback } = require('./slack/message_action/log_feedback');
+const { logDataError } = require('./slack/message_action/log_data_error');
+const { logEngineSuggestion } = require('./slack/message_action/log_engine_suggestion');
+const sendToResponseUrl = require('../dispatch/slack/send_response');
 const { ensureBasecampToken } = require('../middleware/basecamp');
 var router = express.Router();
 
@@ -91,7 +91,6 @@ router.post('/slack/', ensureBasecampToken, async (req, res, next) => {
   if (data.type === 'message_action') {
     if (data.callback_id === 'log_bug') {
       response = await logBug(data, req.basecampToken);
-      console.log('sending log bug response')
       res.status(200);
     } else if (data.callback_id === 'log_feedback') {
       response = await logFeedback(data, req.basecampToken);
