@@ -25,6 +25,7 @@ const verifyCode = (codeCache) => async (req, res) => {
 
     user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     user.lastLogin = new Date();
+    user.slack = slackUser;
     await user.save();
 
     res.status(200).send({ accessToken, refreshToken });

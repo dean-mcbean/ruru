@@ -11,7 +11,7 @@
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 import { handleLogout, refreshAccessToken } from '@/services/auth'
-import jwt_decode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 const router = useRouter()
 
 async function logout() {
@@ -21,7 +21,7 @@ async function logout() {
 
 function isTokenExpired(token) {
   try {
-    const decoded = jwt_decode(token)
+    const decoded = jwtDecode(token)
     if (!decoded.exp) return false
     // exp is in seconds, Date.now() in ms
     return Date.now() >= decoded.exp * 1000

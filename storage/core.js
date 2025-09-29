@@ -50,7 +50,7 @@ class CollectionInterface {
   async insertOne(doc, options = {}) {
     await this._connect();
     const result = await this._collection.insertOne(doc, options);
-    return new Document(this._collection, result.ops[0]);
+    return this.findOne({ _id: result.insertedId });
   }
 
   async updateOne(filter, update, options = {}) {

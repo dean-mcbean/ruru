@@ -2,6 +2,11 @@
 
 
 export const requireAuth = async (to, from, next) => {
+  if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
+    console.log('[authGuard] Development mode: skipping auth check & setting dummy auth state')
+    next()
+    return
+  }
   const authStore = useAuthStore()
   console.log('[authGuard] requireAuth called', { to: to.fullPath })
 

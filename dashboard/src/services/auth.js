@@ -13,7 +13,7 @@ const errorWrapper = async (promise) => {
     } else if (typeof e.response?.data === 'string') {
       msg = 'Server error. Please try again.';
     }
-    error.value = msg;
+    throw new Error(msg);
   }
 }
 

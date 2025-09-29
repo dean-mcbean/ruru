@@ -46,12 +46,16 @@ async function handleVerify() {
     localStorage.setItem('accessToken', res.data.accessToken);
     localStorage.setItem('refreshToken', res.data.refreshToken);
     error.value = '';
-  console.log('[LoginPage] Verification success, reloading page for fresh auth state')
-  window.location.href = '/dashboard';
+    console.log('[LoginPage] Verification success, reloading page for fresh auth state')
+    window.location.href = '/dashboard';
   } catch (e) {
     error.value = e.response?.data || 'Verification failed';
     console.log('[LoginPage] Verification error', error.value)
   }
+}
+
+if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
+  window.location.href = '/dashboard';
 }
 </script>
 <style scoped>
