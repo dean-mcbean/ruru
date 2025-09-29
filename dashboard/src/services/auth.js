@@ -3,20 +3,34 @@ import axios from 'axios';
 
 const API = '/dash-api';
 
+const errorWrapper = async (promise) => {
+  try {
+    return await promise;
+  } catch (e) {
+    let msg = 'Unknown error';
+    if (e.response && e.response.data && typeof e.response.data === 'object') {
+      msg = e.response.data.error || JSON.stringify(e.response.data);
+    } else if (typeof e.response?.data === 'string') {
+      msg = 'Server error. Please try again.';
+    }
+    error.value = msg;
+  }
+}
+
 export async function signup(email) {
-  return axios.post(`${API}/signup`, { email });
+  return errorWrapper(axios.post(`${API}/signup`, { email }));
 }
 
 export async function verify(email, code) {
-  return axios.post(`${API}/verify`, { email, code });
+  return errorWrapper(axios.post(`${API}/verify`, { email, code }));
 }
 
 export async function refresh(refreshToken) {
-  return axios.post(`${API}/refresh`, { refreshToken });
+  return errorWrapper(axios.post(`${API}/refresh`, { refreshToken }));
 }
 
 export async function logout(email) {
-  return axios.post(`${API}/logout`, { email });
+  return errorWrapper(axios.post(`${API}/logout`, { email }));
 }
 
 export async function refreshAccessToken() {
