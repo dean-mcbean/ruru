@@ -1,6 +1,7 @@
 const getProject = require('../../../fetch/basecamp/get_project');
 const getTodoLists = require('../../../fetch/basecamp/get_todo_lists');
 const getProjectPhases = require('../../../fetch/runn/get_project_phases');
+const { createProjectPhase } = require('../../../dispatch/runn/project_phases');
 
 
 const copyTasksToRunn = async (req, res) => {
@@ -53,9 +54,15 @@ const copyTasksToRunn = async (req, res) => {
     return;
   }
 
-  // Here you would add logic to copy tasks from the fetched todo lists to Runn using their API.
-  // This is a placeholder for that logic.
-  console.log(`Todolists`, runnPhases);
+  // Create phases for each todo list if not already existing
+  for (const todoList of todoLists) {
+    const existingPhase = runnPhases.find(phase => phase.name === todoList.name);
+    if (existingPhase) {
+      console.log(`Phase "${todoList.name}" already exists in Runn. Skipping creation.`);
+      continue;
+    }
+    await createProjectPhase(runnProjectId, todoList.name);
+  }
 }
 
 module.exports = copyTasksToRunn;
