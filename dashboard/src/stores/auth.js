@@ -90,6 +90,15 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async checkAuthStatus() {
+      if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
+        console.log('[authStore] checkAuthStatus called in development mode, setting dummy auth state')
+        this.isAuthenticated = true
+        this.userFirstName = process.env.VUE_APP_DEV_FIRST_NAME || 'Dev'
+        this.userLastName = process.env.VUE_APP_DEV_LAST_NAME || 'User'
+        this.userEmail = process.env.VUE_APP_DEV_EMAIL || 'dev@example.com'
+        this.userProfileImage = process.env.VUE_APP_DEV_PROFILE_IMAGE || null
+        return true
+      }
       const token = localStorage.getItem('accessToken')
       console.log('[authStore] checkAuthStatus called, token:', token)
       if (token) {

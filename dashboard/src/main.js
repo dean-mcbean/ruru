@@ -15,4 +15,4 @@
   const authStore = useAuthStore()
   authStore.checkAuthStatus()
 
-  app.mount('#app')
+  app.mount('#body')

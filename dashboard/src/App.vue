@@ -31,8 +31,17 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   background-color: #004b89;
   color: #fff;
+  display: flex;
+  max-height: 100vh;
+  overflow: auto;
+  padding-left: 60px;
+  flex-grow: 1;
 }
-body, html, #app {
+#body {
+  display: flex;
+  align-items: stretch;
+}
+body, html, #body {
   margin: 0;
   padding: 0;
   height: 100%;
