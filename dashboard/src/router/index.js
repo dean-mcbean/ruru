@@ -9,20 +9,14 @@ const routes = [
     beforeEnter: requireGuest
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: () => import('@/views/DashboardPage.vue'),
-    beforeEnter: requireAuth
-  },
-  {
-    path: '/protected',
-    name: 'protected',
-    component: () => import('@/views/ProtectedPage.vue'),
+    path: '/home',
+    name: 'home',
+    component: () => import('@/views/HomePage.vue'),
     beforeEnter: requireAuth
   },
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/home'
   }
 ]
 

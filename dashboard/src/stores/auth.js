@@ -13,6 +13,11 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isLoggedIn: (state) => {
+      if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
+        console.log('[authStore] isLoggedIn getter called in development mode, returning true')
+        state.isAuthenticated = true
+        return true
+      }
       const token = localStorage.getItem('accessToken')
       console.log('[authStore] isLoggedIn getter called, token:', token)
       if (!token) return false

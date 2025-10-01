@@ -1,12 +1,26 @@
 <template>
   <div id="app">
+    <HorizontalNavbar v-if="isAuthenticated" />
     <router-view />
   </div>
 </template>
 
 <script>
+import { useAuthStore } from '@/stores/auth'
+import { computed } from 'vue'
+import HorizontalNavbar from '@/components/HorizontalNavbar.vue'
+
 export default {
   name: 'App',
+  components: {
+    HorizontalNavbar,
+  },
+  setup() {
+    const auth = useAuthStore()
+    const isAuthenticated = computed(() => auth.isLoggedIn)
+
+    return { isAuthenticated }
+  },
 }
 </script>
 
