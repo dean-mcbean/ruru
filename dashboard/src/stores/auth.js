@@ -1,10 +1,12 @@
-  import { defineStore } from 'pinia'
-  import { signup, verify, refreshAccessToken, handleLogout } from '@/services/auth'
-  import { jwtDecode } from 'jwt-decode'
+import { defineStore } from 'pinia'
+import { signup, verify, refreshAccessToken, handleLogout } from '@/services/auth'
+import { jwtDecode } from 'jwt-decode'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
+    userFirstName: null,
+    userLastName: null,
+    userProfileImage: null,
     isAuthenticated: false,
     isLoading: false,
     error: null,
@@ -92,6 +94,9 @@ export const useAuthStore = defineStore('auth', {
           if (decoded.exp && Date.now() < decoded.exp * 1000) {
             this.isAuthenticated = true
             this.userEmail = decoded.email || ''
+            this.userFirstName = decoded.first_name || ''
+            this.userLastName = decoded.last_name || ''
+            this.userProfileImage = decoded.profile_image || ''
             console.log('[authStore] checkAuthStatus: token valid, isAuthenticated set true')
             return true
           } else {
@@ -103,6 +108,9 @@ export const useAuthStore = defineStore('auth', {
       }
       this.isAuthenticated = false
       this.userEmail = ''
+      this.userFirstName = null
+      this.userLastName = null
+      this.userProfileImage = null
       console.log('[authStore] checkAuthStatus: not authenticated, isAuthenticated set false')
       return false
     },

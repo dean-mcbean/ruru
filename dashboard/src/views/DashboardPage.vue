@@ -12,6 +12,7 @@ import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 import { handleLogout, refreshAccessToken } from '@/services/auth'
 import { jwtDecode } from 'jwt-decode'
+import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 
 async function logout() {
@@ -35,6 +36,8 @@ onMounted(async () => {
   if (token && isTokenExpired(token)) {
     await refreshAccessToken()
   }
+  const auth = useAuthStore()
+  console.log('User info:', auth)
 })
 </script>
 
