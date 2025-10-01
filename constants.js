@@ -4,6 +4,7 @@ const MOTION = {
     MATT: 'sV3cNmQAzvbI0ghu8ITAETHvvMQ2',
     SAM: 'hUnZVMH2U4OqvXLE5GynUFhkeXi2',
     RIA: 'YBz72wk0FsdfbSUeEyoCEye2chE3',
+    LOGAN: 'VV5b05GxwgRVsxaAEZKBZCIC1V72',
   },
   PROJECT: {
     FEEDBACK: 'pr_6fSvttFTwa59g4uLPtdmvE',
