@@ -67,7 +67,7 @@ const logDataError = async (data) => {
     sendMessage({
       channel: channelId,
       thread_ts: message.ts,
-      icon_emoji: ':ruru-test:',
+      icon_emoji: ':ruruspecs:',
       markdown_text: `<@${user.id}> has logged this as a ![data error.](${response.taskUrl})`,
     }).then(response => {
       console.log('Data error response sent successfully:', response.data);

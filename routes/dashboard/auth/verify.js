@@ -20,12 +20,20 @@ const verifyCode = (codeCache) => async (req, res) => {
       await Users.updateOne({ email }, { $set: { verified: true } });
     }
 
-    const refreshToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '30d' });
-    const accessToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '15m' });
+    const tokenJSON = { 
+      email,
+      first_name: slackUser.profile.first_name, 
+      last_name: slackUser.profile.last_name,
+      profile_image: slackUser.profile.image_192,
+    };
+
+    const refreshToken = jwt.sign(tokenJSON, JWT_SECRET, { expiresIn: '30d' });
+    const accessToken = jwt.sign(tokenJSON, JWT_SECRET, { expiresIn: '15m' });
 
     user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     user.lastLogin = new Date();
     user.slack = slackUser;
+    console.log('slackUser', slackUser);
     await user.save();
 
     res.status(200).send({ accessToken, refreshToken });

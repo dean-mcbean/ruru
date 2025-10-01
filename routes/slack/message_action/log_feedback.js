@@ -67,7 +67,7 @@ const logFeedback = async (data) => {
     sendMessage({
       channel: channelId,
       thread_ts: message.ts,
-      icon_emoji: ':ruru-test:',
+      icon_emoji: ':ruruspecs:',
       markdown_text: `<@${user.id}> has logged this as ![feedback.](${response.taskUrl})`,
     }).then(response => {
       console.log('Feedback response sent successfully:', response.data);
