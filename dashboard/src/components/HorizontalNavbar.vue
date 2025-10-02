@@ -10,7 +10,7 @@
       </div>
     </div>
     <ul class="nav-items">
-      <li v-for="item in navItems" :key="item.label" class="nav-item">
+      <li v-for="item in navItems" :key="item.label" class="nav-item" @click="router.push(item.route)">
         <i :class="item.icon"></i>
         <span class="show-on-expand">{{ item.label }}</span>
       </li>
@@ -34,6 +34,9 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 const authStore = useAuthStore()
 
 const expanded = ref(false)
@@ -42,10 +45,10 @@ const toggleExpand = () => {
 }
 
 const navItems = [
-  { label: 'Home', icon: 'fas fa-home' },
-  { label: 'Feature Flags', icon: 'fas fa-flag' },
-  { label: 'User Management', icon: 'fas fa-users' },
-  { label: 'Settings', icon: 'fas fa-cog' }
+  { label: 'Home', icon: 'fas fa-home', route: '/home' },
+  { label: 'Feature Flags', icon: 'fas fa-flag', route: '/feature-flags' },
+  { label: 'User Management', icon: 'fas fa-users', route: '/user-management' },
+  { label: 'Project Management', icon: 'fas fa-project-diagram', route: '/project-management' }
 ]
 
 // Simulate loading user profile image from auth
