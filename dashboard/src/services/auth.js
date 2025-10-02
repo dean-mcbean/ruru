@@ -1,7 +1,7 @@
 // src/services/auth.js
 import axios from 'axios';
 
-const API = '/dash-api';
+const API = process.env.VUE_APP_BASE_API_URL;
 
 const errorWrapper = async (promise) => {
   try {

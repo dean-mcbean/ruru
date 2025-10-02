@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const cors = require('cors');
 //var { updateStoredUsers } = require('./slack_usecases/updateStoredUsers');
 
 var indexRouter = require('./routes/index');
@@ -12,6 +13,10 @@ var app = express();
 
 app.set('view engine', 'ejs');
 app.use(logger('dev'));
+app.use(cors({
+  origin: 'http://localhost:8080', // or '*' for all origins (not recommended for production)
+  credentials: true // if you need cookies/auth
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -19,9 +24,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/dashboard', (req, res, next) => {
   const filePath = path.join(__dirname, '../dashboard/dist', req.path);
   console.log(`[DEBUG] /dashboard requested: ${req.path} -> ${filePath}`);
-  next();
+  if (process.env.IS_DEVELOPMENT === 'true') {
+    console.log('[DEBUG] In development mode, redirecting to Vue dev server at http://localhost:8080');
+    return res.redirect(`http://localhost:8080${req.path}`);
+  } else {
+    return express.static(path.join(__dirname, './dashboard/dist'))(req, res, next);
+  }
 });
-app.use('/dashboard', express.static(path.join(__dirname, './dashboard/dist')));
 
 // Optional: For SPA routing support
 app.get('/dashboard/*', (req, res) => {

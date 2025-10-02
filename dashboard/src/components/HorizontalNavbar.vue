@@ -1,15 +1,21 @@
 <template>
   <nav :class="['navbar', { expanded }]">
+    <div class="navbar-top">
+      <img src="@/assets/slack-icon.png" alt="App Logo" class="app-logo" />
+      <div class="navbar-header" @click="toggleExpand">
+        <h2 class="app-title show-on-expand">Ruru</h2>
+        <button class="expand-btn">
+          <i :class="expanded ? 'fas fa-angle-left' : 'fas fa-angle-right'"></i>
+        </button>
+      </div>
+    </div>
     <ul class="nav-items">
       <li v-for="item in navItems" :key="item.label" class="nav-item">
         <i :class="item.icon"></i>
-        <span v-if="expanded">{{ item.label }}</span>
+        <span class="show-on-expand">{{ item.label }}</span>
       </li>
     </ul>
     <div class="navbar-bottom">
-      <button class="expand-btn" @click="toggleExpand">
-        <i :class="expanded ? 'fas fa-angle-left' : 'fas fa-angle-right'"></i>
-      </button>
       <div class="user-icon">
         <img
           v-if="userProfileImageUrl"
@@ -18,8 +24,8 @@
           class="profile-img"
         />
         <i v-else class="fas fa-user-circle"></i>
-        <span v-if="expanded" class="user-name">{{ firstName }}</span>
-        <i v-if="expanded" class="logout-icon fa-solid fa-right-from-bracket" @click="authStore.logout()"></i>
+        <span class="user-name show-on-expand">{{ firstName }}</span>
+        <i class="logout-icon fa-solid fa-right-from-bracket show-on-expand" @click="authStore.logout()"></i>
       </div>
     </div>
   </nav>
@@ -37,8 +43,8 @@ const toggleExpand = () => {
 
 const navItems = [
   { label: 'Home', icon: 'fas fa-home' },
-  { label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-  { label: 'Messages', icon: 'fas fa-envelope' },
+  { label: 'Feature Flags', icon: 'fas fa-flag' },
+  { label: 'User Management', icon: 'fas fa-users' },
   { label: 'Settings', icon: 'fas fa-cog' }
 ]
 
@@ -92,9 +98,65 @@ onMounted(() => {
 }
 .nav-item span {
   margin-left: 16px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .nav-item:hover {
-  background: #333;
+  background: #0004;
+}
+.app-title {
+  margin: 0;
+  font-size: 1.5em;
+  flex-grow: 1;
+  padding-left: 16px;
+  user-select: none;
+}
+.navbar:not(.expanded) .show-on-expand {
+  opacity: 0;
+  max-width: 0;
+  padding: 0 !important;
+  transition: opacity 0.2s, max-width 0.2s, padding 0.2s;
+}
+.navbar.expanded .show-on-expand {
+  transition: opacity 0.2s, max-width 0.2s, padding 0.2s;
+  opacity: 1;
+  max-width: 240px;
+}
+.navbar-top {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #12487580;
+}
+.navbar-header {
+  width: 100%;
+  display: flex;
+  cursor: pointer;
+  transition: background 0.1s;
+  height: 44px;
+  align-items: center;
+}
+.navbar-header:hover {
+  background: #12487580;
+}
+.navbar-top img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  margin: 8px;
+  object-fit: cover;
+  box-sizing: border-box;
+  transition: width 0.2s, height 0.2s, margin 0.2s, border-radius 0.2s, filter 0.2s, opacity 0.2s;
+}
+.navbar.expanded .navbar-top img {
+  height: 64px;
+  margin: 0;
+  border-radius: 0;
+  width: 220px;
+  filter: brightness(0.8) saturate(1.4);
+  opacity: 0.2;
 }
 .navbar-bottom {
   display: flex;
@@ -105,8 +167,6 @@ onMounted(() => {
   background: none;
   border: none;
   color: #fff;
-  margin-bottom: 16px;
-  cursor: pointer;
   font-size: 1.5em;
 }
 .user-icon {

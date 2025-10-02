@@ -38,5 +38,6 @@ onMounted(async () => {
   overflow: auto;
   max-height: 100vh;
   background-color: #124875;
+  align-self: stretch;
 }
 </style>

@@ -36,6 +36,8 @@ export default {
   overflow: auto;
   padding-left: 60px;
   flex-grow: 1;
+  align-items: center;
+  justify-content: center;
 }
 #body {
   display: flex;

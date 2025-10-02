@@ -9,7 +9,7 @@
     <form v-else @submit.prevent="handleVerify">
       <img class="icon" src="@/assets/icon.svg" alt="App Logo" />
       <div class="login-prompt">Enter the verification code sent to your Slack account:</div>
-      <input v-model="code" placeholder="Verification Code" required />
+      <input class="code" v-model="code" placeholder="------" required maxlength="6" @input="onCodeInput" />
       <button type="submit">Verify</button>
     </form>
     <div class="error-message" v-if="error"><i class="fa-solid fa-triangle-exclamation"></i>{{ error }}</div>
@@ -22,6 +22,14 @@ import { signup, verify } from '@/services/auth';
 
 const email = ref('');
 const code = ref('');
+
+function onCodeInput(e) {
+  if (e.target.value.length > 6) {
+    code.value = e.target.value.slice(0, 6);
+  } else {
+    code.value = e.target.value;
+  }
+}
 const step = ref(1);
 const error = ref('');
 
@@ -47,7 +55,7 @@ async function handleVerify() {
     localStorage.setItem('refreshToken', res.data.refreshToken);
     error.value = '';
     console.log('[LoginPage] Verification success, reloading page for fresh auth state')
-    window.location.href = '/welcome';
+    window.location.href = '/dashboard/home';
   } catch (e) {
     error.value = e.response?.data || 'Verification failed';
     console.log('[LoginPage] Verification error', error.value)
@@ -55,7 +63,7 @@ async function handleVerify() {
 }
 
 if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
-  window.location.href = '/welcome';
+  window.location.href = '/dashboard/home';
 }
 </script>
 <style scoped>
@@ -65,6 +73,7 @@ if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
   align-items: center;
   justify-content: center;
   height: 100%;
+  padding-right: 60px;
  }
  .login-view form {
   position: relative;
@@ -98,5 +107,22 @@ if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.code {
+  width: 122px;
+  font-size: 2rem;
+  font-family:'Courier New', Courier, monospace;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border: none;
+  background: none;
+  color: white;
+  box-shadow: none;
+  outline: none;
+  align-self: center;
+}
+.code::placeholder {
+  color: #fff;
+  opacity: 0.2;
 }
 </style>
