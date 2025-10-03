@@ -11,6 +11,8 @@ const { logDataError } = require('./slack/message_action/log_data_error');
 const { logEngineSuggestion } = require('./slack/message_action/log_engine_suggestion');
 const sendToResponseUrl = require('../dispatch/slack/send_response');
 const { ensureBasecampToken } = require('../middleware/basecamp');
+const copyTasksToRunn = require('./slack/slash_commands/copy_tasks_to_runn');
+
 var router = express.Router();
 
 router.get('/', function(req, res) {
@@ -88,7 +90,8 @@ router.post('/curl/', async (req, res, next) => {
 
 /* POST from slack. */
 // eslint-disable-next-line no-unused-vars
-router.post('/slack/', ensureBasecampToken, async (req, res, next) => {
+router.post('/slack/copytaskstorunn', ensureBasecampToken, copyTasksToRunn);
+router.post('/slack/', ensureBasecampToken, async (req, res) => {
   res.status(400)
   const data = JSON.parse(req.body.payload)
   let response;
