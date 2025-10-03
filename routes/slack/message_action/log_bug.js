@@ -90,7 +90,7 @@ const logBug = async (data, basecampToken) => {
     sendMessage({
       channel: channelId,
       thread_ts: message.ts,
-      icon_emoji: ':ruru-test:',
+      icon_emoji: ':ruruspecs:',
       markdown_text: `<@${user.id}> has logged this as a ![bug report.](${todoListUrl})`,
     }).then(() => {
       console.log('Bug report response sent successfully.');
