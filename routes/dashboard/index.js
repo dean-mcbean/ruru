@@ -6,7 +6,7 @@ const verifyCode = require('./auth/verify.js')(codeCache);
 const refreshCode = require('./auth/refresh.js');
 const logout = require('./auth/logout.js');
 const getRunnProjects = require('./runn/get_projects.js');
-const { requireDashboardAuth } = require('../../middleware/requireDashboardAuth.js');
+const requireDashboardAuth = require('../../middleware/requireDashboardAuth.js');
 
 const router = express.Router();
 

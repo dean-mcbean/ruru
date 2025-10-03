@@ -1,6 +1,6 @@
 
 const getRunnProjects = async (req, res) => {
-  return []
+   res.send([]);
 }
 
 module.exports = getRunnProjects;

@@ -17,6 +17,24 @@ const routes = [
   {
     path: '/',
     redirect: '/home'
+  },
+  {
+    path: '/project-management',
+    name: 'project-management',
+    component: () => import('@/views/ProjectManagement.vue'),
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/feature-flags',
+    name: 'feature-flags',
+    component: () => import('@/views/FeatureFlagsPage.vue'),
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/user-management',
+    name: 'user-management',
+    component: () => import('@/views/UserManagementPage.vue'),
+    beforeEnter: requireAuth
   }
 ]
 
