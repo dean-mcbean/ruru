@@ -3,13 +3,19 @@
     <form v-if="step === 1" @submit.prevent="handleSignup">
       <img class="icon" src="@/assets/icon.svg" alt="App Logo" />
       <div class="login-prompt">Enter your email to sign up or log in:</div>
-      <input v-model="email" placeholder="Email" type="email" required />
+      <VTextField v-model="email" width="320" type="email" required />
       <button type="submit">Submit</button>
     </form>
     <form v-else @submit.prevent="handleVerify">
       <img class="icon" src="@/assets/icon.svg" alt="App Logo" />
       <div class="login-prompt">Enter the verification code sent to your Slack account:</div>
-      <input class="code" v-model="code" placeholder="------" required maxlength="6" @input="onCodeInput" />
+      <VOtpInput
+        v-model="code"
+        length="6"
+        input-classes="code"
+        :autofocus="true"
+        :secure="false"
+      />
       <button type="submit">Verify</button>
     </form>
     <div class="error-message" v-if="error"><i class="fa-solid fa-triangle-exclamation"></i>{{ error }}</div>
@@ -18,18 +24,12 @@
 
 <script setup>
 import { ref } from 'vue';
+import { VOtpInput, VTextField } from 'vuetify/components';
 import { signup, verify } from '@/services/auth';
 
 const email = ref('');
 const code = ref('');
 
-function onCodeInput(e) {
-  if (e.target.value.length > 6) {
-    code.value = e.target.value.slice(0, 6);
-  } else {
-    code.value = e.target.value;
-  }
-}
 const step = ref(1);
 const error = ref('');
 
@@ -82,12 +82,8 @@ if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
   align-items: center;
   justify-content: center;
  }
- input {
-  align-self: stretch;
-  margin-top: 8px;
- }
 .login-prompt {
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   font-size: 1.2rem;
   color: #ecf0f1;
 }

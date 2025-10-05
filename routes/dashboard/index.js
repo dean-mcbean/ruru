@@ -6,7 +6,9 @@ const verifyCode = require('./auth/verify.js')(codeCache);
 const refreshCode = require('./auth/refresh.js');
 const logout = require('./auth/logout.js');
 const getRunnProjects = require('./runn/get_projects.js');
+const getBasecampProjects = require('./basecamp/get_projects.js');
 const requireDashboardAuth = require('../../middleware/requireDashboardAuth.js');
+const { ensureBasecampToken } = require('../../middleware/basecamp');
 
 const router = express.Router();
 
@@ -18,5 +20,6 @@ router.post('/logout', logout);
 
 // DATA ROUTES
 router.get('/runn-projects', requireDashboardAuth, getRunnProjects);
+router.get('/basecamp-projects', requireDashboardAuth, ensureBasecampToken, getBasecampProjects);
 
 module.exports = router;

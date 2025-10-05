@@ -1,5 +1,6 @@
+
 <template>
-  <div id="app">
+  <div id="app-container">
     <HorizontalNavbar v-if="isAuthenticated" />
     <router-view />
   </div>
@@ -25,7 +26,7 @@ export default {
 </script>
 
 <style>
-#app {
+#app-container {
   font-family: Inter, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -39,34 +40,14 @@ export default {
   align-items: center;
   justify-content: center;
 }
-#body {
+#app {
   display: flex;
   align-items: stretch;
 }
-body, html, #body {
+body, html, #app {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
-}
-
-input {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-button {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  color: #fff;
-  background-color: #0073d5;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-button:hover {
-  background-color: #0087fb;
 }
 </style>

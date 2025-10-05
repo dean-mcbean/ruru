@@ -5,13 +5,13 @@
       <div class="navbar-header" @click="toggleExpand">
         <h2 class="app-title show-on-expand">Ruru</h2>
         <button class="expand-btn">
-          <i :class="expanded ? 'fas fa-angle-left' : 'fas fa-angle-right'"></i>
+          <VIcon>{{ expanded ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</VIcon>
         </button>
       </div>
     </div>
     <ul class="nav-items">
       <li v-for="item in navItems" :key="item.label" class="nav-item" @click="router.push(item.route)">
-        <i :class="item.icon"></i>
+        <VIcon>{{ item.icon }}</VIcon>
         <span class="show-on-expand">{{ item.label }}</span>
       </li>
     </ul>
@@ -23,9 +23,9 @@
           alt="User"
           class="profile-img"
         />
-        <i v-else class="fas fa-user-circle"></i>
+        <VIcon v-else>mdi-account-circle</VIcon>
         <span class="user-name show-on-expand">{{ firstName }}</span>
-        <i class="logout-icon fa-solid fa-right-from-bracket show-on-expand" @click="authStore.logout()"></i>
+        <VIcon class="logout-icon show-on-expand" @click="authStore.logout()">mdi-logout</VIcon>
       </div>
     </div>
   </nav>
@@ -35,6 +35,7 @@
 import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router';
+import { VIcon } from 'vuetify/components';
 
 const router = useRouter();
 const authStore = useAuthStore()
@@ -45,11 +46,12 @@ const toggleExpand = () => {
 }
 
 const navItems = [
-  { label: 'Home', icon: 'fas fa-home', route: '/home' },
-  { label: 'Feature Flags', icon: 'fas fa-flag', route: '/feature-flags' },
-  { label: 'User Management', icon: 'fas fa-users', route: '/user-management' },
-  { label: 'Project Management', icon: 'fas fa-project-diagram', route: '/project-management' }
+  { label: 'Home', icon: 'mdi-home', route: '/home' },
+  { label: 'Feature Flags', icon: 'mdi-flag', route: '/feature-flags' },
+  { label: 'User Management', icon: 'mdi-account-group', route: '/user-management' },
+  { label: 'Project Management', icon: 'mdi-clipboard-list', route: '/project-management' }
 ]
+// Vuetify VIcon is globally available, no import needed
 
 // Simulate loading user profile image from auth
 const userProfileImageUrl = ref(null)
@@ -69,6 +71,7 @@ onMounted(() => {
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   width: 220px;
