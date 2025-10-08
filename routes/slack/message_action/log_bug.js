@@ -32,7 +32,7 @@
 and MOTION_KEY is in .env, process.env.MOTION_KEY
 */
 const sendMessage = require("../../../dispatch/slack/send_message");
-const getUser = require("../../../fetch/slack/get_user");
+const { getUserById } = require("../../../fetch/slack/get_user");
 const getPeople = require("../../../utils/basecamp/get_people");
 const { BASECAMP } = require('../../../constants');
 const { createCard } = require('../../../dispatch/basecamp/create_card');
@@ -64,7 +64,7 @@ const logBug = async (data, basecampToken) => {
     return 'Sorry, I cannot log a bug report in a private group.';
   }
 
-  const userInfo = await getUser(user.id);
+  const userInfo = await getUserById(user.id);
   let userEmbed = user.name;
   if (userInfo?.user?.profile?.email) {
     const basecampUsers = await getPeople(basecampToken);
