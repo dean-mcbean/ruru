@@ -35,6 +35,12 @@ const routes = [
     name: 'user-management',
     component: () => import('@/views/UserManagementPage.vue'),
     beforeEnter: requireAuth
+  },
+  {
+    path: '/upload-markdown',
+    name: 'upload-markdown',
+    component: () => import('@/views/UploadMarkdownToBasecamp.vue'),
+    beforeEnter: requireAuth
   }
 ]
 

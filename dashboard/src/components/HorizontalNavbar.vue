@@ -49,7 +49,8 @@ const navItems = [
   { label: 'Home', icon: 'mdi-home', route: '/home' },
   { label: 'Feature Flags', icon: 'mdi-flag', route: '/feature-flags' },
   { label: 'User Management', icon: 'mdi-account-group', route: '/user-management' },
-  { label: 'Project Management', icon: 'mdi-clipboard-list', route: '/project-management' }
+  { label: 'Project Management', icon: 'mdi-clipboard-list', route: '/project-management' },
+  { label: 'Upload Markdown', icon: 'mdi-upload', route: '/upload-markdown' }
 ]
 // Vuetify VIcon is globally available, no import needed
 

@@ -9,6 +9,7 @@ const getRunnProjects = require('./runn/get_projects.js');
 const getBasecampProjects = require('./basecamp/get_projects.js');
 const requireDashboardAuth = require('../../middleware/requireDashboardAuth.js');
 const { ensureBasecampToken } = require('../../middleware/basecamp');
+const uploadMarkdown = require('./basecamp/upload-markdown.js');
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.post('/logout', logout);
 // DATA ROUTES
 router.get('/runn-projects', requireDashboardAuth, getRunnProjects);
 router.get('/basecamp-projects', requireDashboardAuth, ensureBasecampToken, getBasecampProjects);
+router.use(uploadMarkdown);
 
 module.exports = router;

@@ -6,7 +6,7 @@ function getUsergroupRepos (usergroup) {
     case 'analysts':
       return ['t-rex'];
     case 'developers':
-      return ['risk-explorer','explorer-api', 'ui-component-library', 'access-explorer', 'terraform-aws', 'cms'];
+      return ['risk-explorer','explorer-api', 'risq', 'ruru', 'ui-component-library', 'access-explorer', 'terraform-aws', 'cms'];
     default:
       return [];
   }
