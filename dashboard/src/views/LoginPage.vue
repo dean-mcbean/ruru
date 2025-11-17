@@ -55,7 +55,7 @@ async function handleVerify() {
     localStorage.setItem('refreshToken', res.data.refreshToken);
     error.value = '';
     console.log('[LoginPage] Verification success, reloading page for fresh auth state')
-    window.location.href = '/dashboard/home';
+    window.location.href = 'home';
   } catch (e) {
     error.value = e.response?.data || 'Verification failed';
     console.log('[LoginPage] Verification error', error.value)
@@ -63,7 +63,7 @@ async function handleVerify() {
 }
 
 if (process.env.VUE_APP_IN_DEVELOPMENT === 'true') {
-  window.location.href = '/dashboard/home';
+  window.location.href = 'home';
 }
 </script>
 <style scoped>

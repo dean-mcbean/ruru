@@ -6,27 +6,6 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { refreshAccessToken } from '@/services/auth'
-import { jwtDecode } from 'jwt-decode'
-
-function isTokenExpired(token) {
-  try {
-    const decoded = jwtDecode(token)
-    if (!decoded.exp) return false
-    // exp is in seconds, Date.now() in ms
-    return Date.now() >= decoded.exp * 1000
-  } catch (e) {
-    return true // treat invalid token as expired
-  }
-}
-
-onMounted(async () => {
-  const token = localStorage.getItem('accessToken')
-  if (token && isTokenExpired(token)) {
-    await refreshAccessToken()
-  }
-})
 </script>
 
 <style scoped>

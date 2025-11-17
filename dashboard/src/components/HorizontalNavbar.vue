@@ -175,6 +175,8 @@ onMounted(() => {
   border: none;
   color: #fff;
   font-size: 1.5em;
+  align-self: stretch;
+  flex-grow: 1;
 }
 .user-icon {
   display: flex;

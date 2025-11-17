@@ -39,7 +39,7 @@ export async function refreshAccessToken() {
   try {
     const res = await refresh(refreshToken);
     localStorage.setItem('accessToken', res.data.accessToken);
-    return true;
+    return res.data;
   } catch {
     // Redirect to login
     return false;

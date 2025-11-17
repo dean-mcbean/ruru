@@ -1,4 +1,4 @@
-  import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 
 
 export const requireAuth = async (to, from, next) => {
@@ -23,9 +23,9 @@ export const requireAuth = async (to, from, next) => {
   if (!authStore.isLoggedIn) {
     console.log('[authGuard] Store not logged in, checking auth status')
     try {
-      await authStore.checkAuthStatus()
-      console.log('[authGuard] checkAuthStatus result:', authStore.isLoggedIn)
-      if (authStore.isLoggedIn) {
+      const isAuthenticated = await authStore.checkAuthStatus()
+      console.log('[authGuard] checkAuthStatus result:', isAuthenticated)
+      if (isAuthenticated) {
         console.log('[authGuard] Authenticated, proceeding')
         next()
       } else {

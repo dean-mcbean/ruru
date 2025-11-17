@@ -84,6 +84,7 @@ const filteredAndSortedItems = computed(() => {
 .data-column {
   border-radius: 8px;
   padding: 1rem;
+  padding-top: 0;
 }
 .controls {
   display: flex;

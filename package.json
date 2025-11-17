@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "cd ./dashboard && npm run build && cd .. && nodemon --ignore ./public/ ./bin/www"
+    "dev": "concurrently \"npm:dashboard:dev\" \"nodemon --ignore ./public/ ./bin/www\"",
+    "dashboard:dev": "cd ./dashboard && npm run serve"
   },
   "dependencies": {
     "@slack/web-api": "^6.9.1",
@@ -29,6 +30,7 @@
     "unzipper": "^0.11.6"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "nodemon": "^3.1.0"
   }

@@ -3,15 +3,27 @@ import { signup, verify, refreshAccessToken, handleLogout } from '@/services/aut
 import { jwtDecode } from 'jwt-decode'
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    userFirstName: null,
-    userLastName: null,
-    userProfileImage: null,
-    isAuthenticated: false,
-    isLoading: false,
-    error: null,
-    userEmail: ''
-  }),
+  state: () => {
+    const token = localStorage.getItem('accessToken')
+    const initState = {
+      userFirstName: null,
+      userLastName: null,
+      userProfileImage: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      userEmail: ''
+    }
+    
+    if (token) {
+      const decoded = jwtDecode(token)
+      initState.userEmail = decoded.email || ''
+      initState.userFirstName = decoded.first_name || ''
+      initState.userLastName = decoded.last_name || ''
+      initState.userProfileImage = decoded.profile_image || ''
+    }
+    return initState
+  },
 
   getters: {
     isLoggedIn: (state) => {
@@ -78,6 +90,7 @@ export const useAuthStore = defineStore('auth', {
         return refreshed
       } catch (error) {
         this.error = error.response?.data || error.message || 'Token refresh failed'
+        console.log('[authStore] refreshToken error:', this.error)
         return false
       } finally {
         this.isLoading = false
@@ -99,12 +112,40 @@ export const useAuthStore = defineStore('auth', {
         this.userProfileImage = process.env.VUE_APP_DEV_PROFILE_IMAGE || null
         return true
       }
-      const token = localStorage.getItem('accessToken')
+      let token = localStorage.getItem('accessToken')
       console.log('[authStore] checkAuthStatus called, token:', token)
       if (token) {
         try {
-          const decoded = jwtDecode(token)
+          let decoded = jwtDecode(token)
           console.log('[authStore] checkAuthStatus decoded token:', decoded)
+          // If token is expired or about to expire in 1 minute, try to refresh
+          if (!decoded.exp || Date.now() >= decoded.exp * 1000 - 60000) {
+          console.log('[authStore] checkAuthStatus: token expired or about to expire, attempting refresh')
+          const refreshed = await this.refreshToken()
+          console.log('[authStore] checkAuthStatus: refreshToken result:', refreshed)
+          if (refreshed && refreshed.accessToken) {
+            token = refreshed.accessToken
+            localStorage.setItem('accessToken', token)
+            decoded = jwtDecode(token)
+            console.log('[authStore] checkAuthStatus: token refreshed and decoded:', decoded)
+
+            // if "redirect" set in url, redirect now
+            const urlParams = new URLSearchParams(window.location.search)
+            const redirectPath = urlParams.get('redirect')
+            if (redirectPath) {
+              console.log('[authStore] checkAuthStatus: redirecting to', redirectPath)
+              window.location.href = "dashboard/" + redirectPath
+            }
+          } else {
+            console.log('[authStore] checkAuthStatus: token refresh failed')
+            this.isAuthenticated = false
+            this.userEmail = ''
+            this.userFirstName = null
+            this.userLastName = null
+            this.userProfileImage = null
+            return false
+          }
+          }
           if (decoded.exp && Date.now() < decoded.exp * 1000) {
             this.isAuthenticated = true
             this.userEmail = decoded.email || ''
