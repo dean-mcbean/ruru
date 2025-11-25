@@ -24,7 +24,34 @@ const BASECAMP = {
   }
 }
 
+
+const HUBSPOT = {
+  SAAS: [
+    { id: 188541336, label: '1. Qualified Lead (SaaS)' },
+    { id: 188541337, label: '2. Initial Engagement (SaaS)' },
+    { id: 188541338, label: '3. Needs Alignment & Demos (SaaS)' },
+    { id: 188541339, label: '4. Proposal Requested (SaaS)' },
+    { id: 188541340, label: '5. Proposal Sent (SaaS)' },
+    { id: 202334287, label: '6. Proposal Favourably Received  (SaaS)' },
+    { id: 188541341, label: '7. Contract Negotiations (SaaS)' },
+    { id: 188541342, label: '8. Won (SaaS)' },
+    { id: 188541343, label: '9. Lost (SaaS)' },
+  ],
+  CONSULTING_GRANTS: [
+    { id: 1032796307, label: '1. Qualified Lead (Consulting & Grants)' },
+    { id: 1032796308, label: '2. Initial Engagement (Consulting & Grants)' },
+    { id: 1032796309, label: '3. Needs Alignment & Demos (Consulting & Grants)' },
+    { id: 1032796310, label: '4. Proposal Requested (Consulting & Grants)' },
+    { id: 1032796311, label: '5. Proposal Sent (Consulting & Grants)' },
+    { id: 1032440949, label: '6. Proposal Favourably Received  (Consulting & Grants)' },
+    { id: 1032440950, label: '7. Contract Negotiations (Consulting & Grants)' },
+    { id: 1032796312, label: '8. Won (Consulting & Grants)' },
+    { id: 1032420152, label: '9. Lost (Consulting & Grants)' },
+  ]
+}
+
 module.exports = {
   MOTION,
-  BASECAMP
+  BASECAMP,
+  HUBSPOT,
 };

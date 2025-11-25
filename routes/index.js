@@ -146,6 +146,23 @@ router.post('/pipeline/', async (req, res, next) => {
   res.status(200).send();
 });
 
+/* POST from hubspot. */
+// eslint-disable-next-line no-unused-vars
+router.post('/hubspot/', async (req, res, next) => {
+  console.log('Received HubSpot webhook:', req.body); 
+  try { 
+    for (const deal of req.body) {
+      // stage has become "7. Contract Negotiations"
+      if (deal.propertyName == 'dealstage' && deal.propertyValue == '188541341') {
+        console.log('valid stage change', deal)
+      }
+    }
+    res.status(200).send()
+  } catch (e) {
+    console.log(e)
+  }
+});
+
 /* POST from explorer api. */
 // Used to track usage of Rex, has now been replaced by datadog
 // Still kept with a 200 response for backwards compatibility

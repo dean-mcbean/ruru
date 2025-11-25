@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "concurrently \"npm:dashboard:dev\" \"nodemon --ignore ./public/ ./bin/www\"",
+    "dev": "./dev.sh",
     "dashboard:dev": "cd ./dashboard && npm run serve"
   },
   "dependencies": {
@@ -30,8 +30,25 @@
     "unzipper": "^0.11.6"
   },
   "devDependencies": {
+    "@vue/cli-plugin-babel": "^5.0.9",
     "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "nodemon": "^3.1.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {
+      "vue/multi-word-component-names": "off"
+    }
   }
 }

@@ -10,7 +10,7 @@
       </div>
     </div>
     <ul class="nav-items">
-      <li v-for="item in navItems" :key="item.label" class="nav-item" @click="router.push(item.route)">
+      <li v-for="item in navItems" :key="item.label" class="nav-item" @click="router.push(item.route)" :class="{ disabled: item.disabled }">
         <VIcon>{{ item.icon }}</VIcon>
         <span class="show-on-expand">{{ item.label }}</span>
       </li>
@@ -47,8 +47,8 @@ const toggleExpand = () => {
 
 const navItems = [
   { label: 'Home', icon: 'mdi-home', route: '/home' },
-  { label: 'Feature Flags', icon: 'mdi-flag', route: '/feature-flags' },
-  { label: 'User Management', icon: 'mdi-account-group', route: '/user-management' },
+  { label: 'Feature Flags', icon: 'mdi-flag', route: '/feature-flags', disabled: true },
+  { label: 'User Management', icon: 'mdi-account-group', route: '/user-management', disabled: true },
   { label: 'Project Management', icon: 'mdi-clipboard-list', route: '/project-management' },
   { label: 'Upload Markdown', icon: 'mdi-upload', route: '/upload-markdown' }
 ]
@@ -96,12 +96,18 @@ onMounted(() => {
   padding: 16px;
   cursor: pointer;
   transition: background 0.2s;
+  user-select: none;
 }
 .nav-item i {
   font-size: 1.2em;
   width: 24px;
   text-align: center;
   flex: none;
+}
+.nav-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
 }
 .nav-item span {
   margin-left: 16px;

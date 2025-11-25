@@ -7,7 +7,7 @@ module.exports = async function getProjects() {
 
   try {
     do {
-      const url = `https://api.runn.io/projects` + (cursor ? `?cursor=${encodeURIComponent(cursor)}` : '');
+      const url = `https://api.runn.io/projects?limit=100` + (cursor ? `&cursor=${encodeURIComponent(cursor)}` : '');
       const response = await axios.get(url, {
         headers: {
           'Authorization': `Bearer ${process.env.RUNN_TOKEN}`,
@@ -21,6 +21,7 @@ module.exports = async function getProjects() {
         allProjects.push(...values);
       }
       cursor = nextCursor;
+      console.log(`Fetched ${values.length} projects, nextCursor: ${nextCursor}`);
     } while (cursor);
 
     return allProjects;

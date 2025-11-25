@@ -124,7 +124,7 @@ export const useAuthStore = defineStore('auth', {
           const refreshed = await this.refreshToken()
           console.log('[authStore] checkAuthStatus: refreshToken result:', refreshed)
           if (refreshed && refreshed.accessToken) {
-            token = refreshed.accessToken
+            token = refreshed.accessToken 
             localStorage.setItem('accessToken', token)
             decoded = jwtDecode(token)
             console.log('[authStore] checkAuthStatus: token refreshed and decoded:', decoded)
@@ -134,7 +134,7 @@ export const useAuthStore = defineStore('auth', {
             const redirectPath = urlParams.get('redirect')
             if (redirectPath) {
               console.log('[authStore] checkAuthStatus: redirecting to', redirectPath)
-              window.location.href = "dashboard/" + redirectPath
+              window.location.href = "/dashboard" + (redirectPath.startsWith("/") ? redirectPath : "/" + redirectPath)
             }
           } else {
             console.log('[authStore] checkAuthStatus: token refresh failed')
