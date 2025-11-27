@@ -14,6 +14,7 @@ const { ensureBasecampToken } = require('../../middleware/basecamp');
 const uploadMarkdown = require('./basecamp/upload-markdown.js');
 const { createBasecampProject } = require('./basecamp/create_project.js');
 const notifyOnSlack = require('./slack/notifyOnSlack.js');
+const getRunnClients = require('./runn/get_clients.js');
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.post('/logout', logout);
 router.post('/slack/notify', requireDashboardAuth, notifyOnSlack);
 
 // DATA ROUTES
+router.get('/runn/clients', requireDashboardAuth, getRunnClients);
 router.get('/runn-projects', requireDashboardAuth, getRunnProjects);
 router.post('/runn/projects', requireDashboardAuth, createRunnProject);
 router.get('/hubspot/deals', requireDashboardAuth, getHubspotDeals);

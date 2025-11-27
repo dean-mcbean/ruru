@@ -1,12 +1,12 @@
 const axios = require('axios');
 
-const createProject = async (name, budget, managerIds) => {
+const createProject = async (name, budget, managerIds, clientId) => {
   try {
     const response = await axios.post(
       `https://api.runn.io/projects/`,
       {
         name,
-        clientId: 646009, // Assign to Urban Intelligence, to be reassigned
+        clientId: clientId || 646009, // Default to Urban Intelligence
         budget,
         managerIds
       },

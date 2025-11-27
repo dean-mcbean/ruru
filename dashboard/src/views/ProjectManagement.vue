@@ -1,21 +1,31 @@
 <template >
   <div class="dashboard-view">
-    <h1>Project Management</h1>
+    <div class="dashboard-header">
+      <h1>Project Management</h1>
+      <VTextField
+        v-model="searchQuery"
+        prepend-inner-icon="mdi-magnify"
+        label="Search projects"
+        hide-details
+        dense
+        style="max-width: 320px;"
+      />
+    </div>
     <div class="project-table">
       <div>
         <div class="table-header">
-          <h3>Basecamp</h3>
           <div class="pill" v-if="basecampLoaded === 'false'">Loading...</div>
           <div class="pill" v-if="basecampLoaded === 'error'" @click="loadBasecampProjects">Error <VIcon icon="mdi-refresh" /></div>
         </div>
         <DataColumn
-          :items="basecampProjects"
+          title="Basecamp"
+          :items="filteredBasecampProjects"
           :sortFields="['name']"
         >
           <template #default="{ item }">
             <div class="project-item-column">
               <div class="project-item-header">
-                <strong>{{ item.name }}</strong>
+                <strong><SearchHighlight :text="item.name" :query="searchQuery" /></strong>
                 <VMenu open-on-hover>
                   <template #activator="{ props }">
                   <VIcon
@@ -33,13 +43,6 @@
                   </VList>
                 </VMenu>
               </div>
-            </div>
-          </template>
-          <template #details="{ item }">
-            <div class="project-item-column">
-              <div class="project-item-header">
-                <strong>{{ item.name }}</strong><br />
-              </div>
               <div class="project-item-content">
                 <span>Start Date: {{ item.start_date ? formatDate(new Date(item.start_date)) : 'N/A' }}</span>
                 <span>End Date: {{ item.end_date ? formatDate(new Date(item.end_date)) : 'N/A' }}</span>
@@ -50,18 +53,19 @@
       </div>
       <div>
         <div class="table-header">
-          <h3>Runn</h3>
           <div class="pill" v-if="runnLoaded === 'false'">Loading...</div>
           <div class="pill" v-if="runnLoaded === 'error'" @click="loadRunnProjects">Error <VIcon icon="mdi-refresh" /></div>
         </div>
         <DataColumn
-          :items="runnProjects"
-          :sortFields="['name', 'phases']"
+          title="Runn"
+          :items="filteredRunnProjects"
+          :sortFields="['name', 'clientName', 'phases']"
+          :page-length="6"
         >
           <template #default="{ item }">
             <div class="project-item-column">
               <div class="project-item-header">
-                <a target="_blank" :href="`https://app.runn.io/projects/${item.id}`"><strong>{{ item.name }}</strong></a>
+                <a target="_blank" :href="`https://app.runn.io/projects/${item.id}`"><strong><SearchHighlight :text="item.name" :query="searchQuery" /></strong></a>
                 <VMenu open-on-hover>
                   <template #activator="{ props }">
                   <VIcon
@@ -82,25 +86,32 @@
                   </VList>
                 </VMenu>
               </div>
-            </div>
-          </template>
-          <template #details="{ item }">
-            <div class="project-item-column">
-              <div class="project-item-header">
-                <h3>{{ item.name }}</h3>
-              </div>
               <div class="project-item-content">
-                <template v-if="item.phases && item.phases.length > 0">
-                  <b>Phases:</b>
-                  <ul>
-                    <li v-for="phase in item.phases" :key="phase.id" :style="{ marginLeft: '24px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }">
-                      {{ phase.name }}
-                    </li>
-                  </ul>
-                </template>
-                <template v-else>
-                  <i>No Phases</i>
-                </template>
+                <div><SearchHighlight :text="runnClients.find(c => c.id === item.clientId)?.name || 'N/A'" :query="searchQuery" /></div>
+                <div>
+                  <template v-if="item.budget !== undefined && item.budget !== null">
+                    {{ '$' + item.budget }}
+                  </template>
+                  <template v-else>
+                    <span :style="{
+                      fontStyle: 'italic',
+                      color: '#AAA'
+                    }">No Budget</span>
+                  </template>
+                </div>
+                <div :style="{
+                  gridColumn: 'span 2',
+                }">
+                  <template v-if="item.phases && item.phases.length > 0">
+                    {{ item.phases.length }} Phases
+                  </template>
+                  <template v-else>
+                    <span :style="{
+                      fontStyle: 'italic',
+                      color: '#AAA'
+                    }">No Phases</span>
+                  </template>
+                </div>
               </div>
             </div>
           </template>
@@ -108,19 +119,20 @@
       </div>
       <div>
         <div class="table-header">
-          <h3>Hubspot</h3>
           <div class="pill" v-if="hubspotLoaded === 'disabled'">Disabled</div>
           <div class="pill" v-if="hubspotLoaded === 'false'">Loading...</div>
           <div class="pill" v-if="hubspotLoaded === 'error'" @click="loadHubspotProjects">Error <VIcon icon="mdi-refresh" /></div>
         </div>
         <DataColumn
-          :items="hubspotProjects"
+          title="Hubspot"
+          :items="filteredHubspotProjects"
           :sortFields="['name', 'createdAt', 'updatedAt']"
+          :page-length="6"
         >
           <template #default="{ item }">
             <div class="project-item-column">
               <div class="project-item-header">
-                <strong>{{ item.properties.dealname }}</strong>
+                <strong><SearchHighlight :text="item.properties.dealname" :query="searchQuery" /></strong>
                 <VMenu open-on-hover>
                   <template #activator="{ props }">
                   <VIcon
@@ -141,16 +153,22 @@
                   </VList>
                 </VMenu>
               </div>
-            </div>
-          </template>
-          <template #details="{ item }">
-            <div class="project-item-column">
-              <div class="project-item-header">
-                <h3>{{ item.properties.dealname }}</h3>
-              </div>
               <div class="project-item-content">
-                <span>Created: {{ formatDateTime(item.createdAt) || 'N/A' }}</span>
-                <span>Last Updated: {{ formatDateTime(item.updatedAt) || 'N/A' }}</span>
+                <div>{{ item.pipeline == 'SAAS' ? 'Saas' : 'Consulting & Grants' }}</div>
+                <div>
+                  <template v-if="item.properties.amount">
+                    {{ '$' + item.properties.amount }}
+                  </template>
+                  <template v-else>
+                    <span :style="{
+                      fontStyle: 'italic',
+                      color: '#AAA'
+                    }">No Budget</span>
+                  </template>
+                </div>
+                <div :style="{
+                  gridColumn: 'span 2',
+                }">{{ item.stageLabel.split('(')[0].trim() || 'N/A' }}</div>
               </div>
             </div>
           </template>
@@ -168,8 +186,29 @@
             <p>You are about to create a project in {{ copyActionInfo.type }} with the following fields:</p>
             <div :style="{padding: '8px', display: 'flex', flexDirection: 'column', border: '1px solid #CCC', borderRadius: '4px', backgroundColor: '#F9F9F9'}">
               <span v-for="(val, key) in copyActionInfo.fields" :key="key">
-                <strong>{{ key }}:</strong> {{ val }}
+                <span v-if="val"><strong>{{ key }}:</strong> {{ val }}</span>
               </span>
+            </div>
+            <div v-if="copyActionInfo.type === 'Basecamp'" style="margin-top: 16px;">
+              <VSelect
+                v-model="selectedBasecampTemplate"
+                :items="basecampTemplates"
+                label="Basecamp Template"
+                dense
+                hide-details
+                style="max-width: 220px;"
+              />
+            </div>
+            <div v-if="copyActionInfo.type === 'Runn'" style="margin-top: 16px;">
+              <VSelect
+                v-model="selectedRunnClient"
+                :items="runnClients.map(c => ({ title: c.name, value: c })).toSorted((a, b) => a.title.localeCompare(b.title))"
+                label="Runn Client"
+                dense
+                hide-details
+                style="max-width: 220px;"
+                :filterable="true"
+              />
             </div>
             <p>Are you sure you want to proceed?</p>
           </div>
@@ -196,14 +235,32 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+// Basecamp template options
+const basecampTemplates = [
+  { title: 'No Template', value: undefined },
+  { title: 'Consulting', value: '44236682' },
+  { title: 'Quarterly Update', value: '44817861' },
+  { title: 'SaaS', value: '44236730' },
+]
+const selectedBasecampTemplate = ref(undefined)
+const selectedRunnClient = ref({
+        "id": 646009,
+        "name": "Urban Intelligence",
+        "website": null,
+        "isArchived": false,
+        "references": [],
+        "createdAt": "2025-09-16T04:46:38.324Z",
+        "updatedAt": "2025-09-16T04:46:38.324Z"
+    })
+import { ref, reactive, computed } from 'vue'
 import { onMounted } from 'vue'
-import { getRunnProjects } from '@/services/runn/runn'
+import { getRunnProjects, getRunnClients } from '@/services/runn/runn'
 import { getBasecampProjects } from '@/services/basecamp/basecamp'
 import { getHubspotDeals } from '@/services/hubspot/hubspot'
+import SearchHighlight from '@/components/atoms/SearchHighlight.vue'
 import DataColumn from '@/components/data/DataColumn.vue'
 import { VIcon, VMenu, 
-VList, VListItem, VListItemTitle, VSnackbar, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn
+VList, VListItem, VListItemTitle, VSnackbar, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn, VTextField, VSelect
  } from 'vuetify/components'
 import { createBasecampProject } from '@/services/basecamp/basecamp'
 import { createRunnProject } from '@/services/runn/runn'
@@ -211,13 +268,16 @@ import { notifyOnSlack } from '@/services/slack/slack'
 // Modal state and info for copyTo actions
 const showCopyConfirm = ref(false)
 const copyActionInfo = reactive({
-  type: '', // e.g. 'RunnToBasecamp', 'HubspotToRunn'
+  type: '', // e.g. 'Basecamp', 'Runn'
   source: null, // the source item
   fields: {}, // fields to show in modal
   onConfirm: null // callback
 })
 
 function openCopyConfirm(type, source, fields, onConfirm) {
+    if (type === 'Basecamp') {
+      selectedBasecampTemplate.value = undefined
+    }
   copyActionInfo.type = type
   copyActionInfo.source = source
   copyActionInfo.fields = fields
@@ -228,7 +288,12 @@ function openCopyConfirm(type, source, fields, onConfirm) {
 function confirmCopyAction() {
   showCopyConfirm.value = false
   if (typeof copyActionInfo.onConfirm === 'function') {
-    copyActionInfo.onConfirm()
+    // Pass selected template for Basecamp if relevant
+    if (copyActionInfo.type === 'Basecamp') {
+      copyActionInfo.onConfirm(selectedBasecampTemplate.value)
+    } else {
+      copyActionInfo.onConfirm()
+    }
   }
 }
 
@@ -241,6 +306,7 @@ function cancelCopyAction() {
 }
 
 const runnProjects = ref([])
+const runnClients = ref([])
 const runnLoaded = ref("false")
 const hubspotProjects = ref([])
 const hubspotLoaded = ref("disabled")
@@ -251,6 +317,28 @@ const snackbarNotifications = ref([])
 const snackbarHeader = ref('')
 const showSnackbar = ref(false)
 
+const searchQuery = ref('')
+
+const filteredRunnProjects = computed(() => {
+  if (!searchQuery.value) return runnProjects.value
+  return runnProjects.value.filter(proj =>
+    proj.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    (runnClients.value.find(c => c.id === proj.clientId)?.name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+const filteredBasecampProjects = computed(() => {
+  if (!searchQuery.value) return basecampProjects.value
+  return basecampProjects.value.filter(proj =>
+    proj.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+const filteredHubspotProjects = computed(() => {
+  if (!searchQuery.value) return hubspotProjects.value
+  return hubspotProjects.value.filter(proj =>
+    proj.properties.dealname.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
 function formatDate(dateStr) {
   const date = new Date(dateStr)
   const day = String(date.getDate()).padStart(2, '0')
@@ -258,43 +346,23 @@ function formatDate(dateStr) {
   return `${day}/${month}`
 }
 
-function formatDateTime(date = new Date()) {
-  // Extract parts
-  let month = date.getMonth() + 1; // months are 0-based
-  let day = date.getDate();
-  let year = date.getFullYear() % 100; // last two digits
-
-  let hours = date.getHours();
-  let minutes = date.getMinutes();
-
-  // AM/PM logic
-  let ampm = hours >= 12 ? 'pm' : 'am';
-  hours = hours % 12;
-  hours = hours ? hours : 12; // 0 → 12
-
-  // Pad with leading zeros
-  month = month.toString().padStart(2, '0');
-  day = day.toString().padStart(2, '0');
-  year = year.toString().padStart(2, '0');
-  minutes = minutes.toString().padStart(2, '0');
-
-  return `${month}/${day}/${year} ${hours}:${minutes}${ampm}`;
-}
-
 async function copyRunnToBasecamp(runnProject) {
   const basecampProject = {
     name: runnProject.name,
     description: runnProject.description,
+    subscribers: "Chantelle, Ruru"
   }
   openCopyConfirm(
-    'RunnToBasecamp',
+    'Basecamp',
     runnProject,
     basecampProject,
     async () => {
       snackbarHeader.value = `Creating Basecamp project from "${runnProject.name}"`
-      snackbarNotifications.value = ["Setting up project from template..."]
+      const templateKey = basecampTemplates.find(t => t.value === selectedBasecampTemplate.value)?.title || 'None'
+      snackbarNotifications.value = ["Setting up project from template... (Template: " + templateKey + ")"]
       showSnackbar.value = true
-      const createdProject = await createBasecampProject(basecampProject).catch(err => {
+      // Pass template to API if needed, or just log for now
+      const createdProject = await createBasecampProject({ ...basecampProject, template: selectedBasecampTemplate.value }).catch(err => {
         console.error('Error creating Runn project:', err)
         snackbarHeader.value = "Error: " + (err.response?.data?.message || err.message || 'Unknown error')
       })
@@ -306,10 +374,10 @@ async function copyRunnToBasecamp(runnProject) {
       const todoLists = runnProject.phases.map(phase => ({ name: phase.name,
         description: `Start: ${formatDate(phase.startDate)} -> End: ${formatDate(phase.endDate)}`
       }))
-      console.log(createdProject, todoLists, todoSetId)
+      console.log(createdProject, todoLists, todoSetId, 'Template:', selectedBasecampTemplate.value)
       
       const urlToNewProject = createdProject.data.app_url
-      notifyOnSlack(`New Basecamp Project: ${urlToNewProject}`)
+      notifyOnSlack(`New Basecamp Project made from template "${templateKey}": ${urlToNewProject}`)
     }
   )
 }
@@ -320,21 +388,21 @@ async function copyHubspotToRunn(hubspotDeal) {
     budget: parseFloat(hubspotDeal.properties.amount) || 0,
   }
   openCopyConfirm(
-    'HubspotToRunn',
+    'Runn',
     hubspotDeal,
     runnProject,
     async () => {
-      snackbarHeader.value = `Creating Runn project from "${hubspotDeal.properties.dealname}"`
+      snackbarHeader.value = `Creating Runn project from "${hubspotDeal.properties.dealname}" for client "${selectedRunnClient.value?.name || 'N/A'}"`
       snackbarNotifications.value = []
       showSnackbar.value = true
-      const newRunnProject = await createRunnProject(runnProject.name, runnProject.budget, runnProject.managerIds).catch(err => {
+      const newRunnProject = await createRunnProject(runnProject.name, runnProject.budget, runnProject.managerIds, selectedRunnClient.value.id).catch(err => {
         console.error('Error creating Runn project:', err)
         snackbarHeader.value = "Error: " + (err.response?.data?.message || err.message || 'Unknown error')
       })
       snackbarNotifications.value.push("Created Runn project.")
 
       const urlToNewProject = `https://app.runn.io/projects/${newRunnProject.data.id}`
-      notifyOnSlack(`New Runn Project: ${urlToNewProject}`)
+      notifyOnSlack(`New Runn Project for client "${selectedRunnClient.value?.name || 'N/A'}": ${urlToNewProject}`)
     }
   )
 }
@@ -344,7 +412,16 @@ const loadRunnProjects = async () => {
     runnLoaded.value = "false"
     const res = await getRunnProjects()
     // Filter out clientId for internal management projects
-    runnProjects.value = res.data.filter(proj => !proj.isArchived && proj.clientId !== 646009)
+    const clients = await getRunnClients()
+    runnClients.value = clients.data
+    runnProjects.value = res.data.filter(proj => !proj.isArchived && proj.clientId !== 646009).map(proj => {
+      // Map client names
+      const client = clients.data.find(c => c.id === proj.clientId)
+      return {
+        ...proj,
+        clientName: client ? client.name : 'N/A'
+      }
+    })
     runnLoaded.value = "true"
   } catch (err) {
     console.error('Error fetching Runn projects:', err)
@@ -388,13 +465,13 @@ a {
   text-decoration: none;
 }
 h1 {
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 .dashboard-view {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  padding: 32px 64px;
+  padding: 16px 48px;
   overflow: auto;
   max-height: 100vh;
   background-color: #adc8e2;
@@ -435,6 +512,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  min-height: 60px;
 }
 .project-item-header {
   display: flex;
@@ -443,15 +521,28 @@ h1 {
   justify-content: space-between;
   background-color: #adc8e240;
   padding: 8px 12px;
+  line-height: 1.2;
 }
 .project-item-content {
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   line-height: 1.2;
+  font-size: 0.9em;
+}
+.project-item-content>* {
+  padding: 6px 12px;
+  flex-grow: 1;
+  border-right: 1px solid #00213c10;
+  border-bottom: 1px solid #00213c20;
+  white-space: nowrap;
+  color: #000D;
 }
 .phases-list {
   padding-left: 12px;
+}
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 </style>

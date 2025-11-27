@@ -11,6 +11,7 @@ export const uploadMarkdownToBasecamp = (file, bucketId) => {
   return authAxios.post(`${process.env.VUE_APP_BASE_API_URL}/upload-markdown`, formData);
 }
 
-export const createBasecampProject = ({name, description}) => {
-  return authAxios.post(`${process.env.VUE_APP_BASE_API_URL}/basecamp/project`, { name, description });
+export const createBasecampProject = ({name, description, template}) => {
+  // Adds Chantelle as a subscriber by default
+  return authAxios.post(`${process.env.VUE_APP_BASE_API_URL}/basecamp/project`, { name, description, template, subscribers: [49523550] });
 };

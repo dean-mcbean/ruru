@@ -1,29 +1,61 @@
 <template>
   <div class="data-column">
-    <div class="controls">
-      <button v-if="sortField" @click="toggleSort">
-        <VIcon>{{ sortAsc ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</VIcon>
-      </button>
-      <VSelect
-        v-if="sortFields.length"
-        v-model="sortField"
-        :items="sortFields"
-        :density="'compact'"
-        variant="outlined"
-        label="Sort by"
-        hide-details
-      />
-      <input
-        v-if="filterFields.length"
-        v-model="filterValue"
-        :placeholder="`Filter ${filterField}`"
-        class="filter-input"
-      />
+    <div class="column-title">
+      <h3>{{ title }}</h3>
+      <div class="controls">
+        <input
+          v-if="filterFields.length"
+          v-model="filterValue"
+          :placeholder="`Filter ${filterField}`"
+          class="filter-input"
+        />
+        <VMenu>
+          <template #activator="{ props, isActive, toggle }">
+            <VIcon
+          v-bind="props"
+          icon="mdi-sort"
+          size="24"
+          aria-label="More options"
+          class="project-options-btn"
+          @click="toggle"
+          :style="{
+            backgroundColor: isActive ? '#00213c20' : 'transparent'
+          }"
+            />
+          </template>
+          <div
+            @mousedown.stop
+            @click.stop
+            :style="{
+          backgroundColor: 'white',
+          padding: '16px',
+          display: 'flex',
+          gap: '16px',
+          borderRadius: '8px',
+          alignItems: 'center',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }"
+          >               
+            <VSelect
+          v-if="sortFields.length"
+          v-model="sortField"
+          :items="sortFields"
+          :density="'compact'"
+          variant="outlined"
+          label="Sort by"
+          hide-details
+            />
+            <button v-if="sortField" @click="toggleSort">
+          <VIcon>{{ sortAsc ? 'mdi-arrow-up' : 'mdi-arrow-down' }}</VIcon>
+            </button> 
+          </div>
+        </VMenu>
+      </div>
     </div>
     <div 
       v-for="item in paginatedItems"
       :key="item.id || item[sortField] || JSON.stringify(item)">
-      <VTooltip :location="computedTooltipLocation">
+      <VTooltip :location="computedTooltipLocation" v-if="$slots.details">
         <template v-slot:activator="{ props }">
           <VCard
             v-bind="props"
@@ -38,6 +70,9 @@
           <slot name="details" :item="item">{{ item[sortField] || JSON.stringify(item) }}</slot>
         </VCard>
       </VTooltip>
+      <div v-else class="item-box">
+        <slot :item="item">{{ item[sortField] || JSON.stringify(item) }}</slot>
+      </div>
     </div>
     <div v-if="pageCount > 1" class="pagination-controls">
       <button @click="prevPage" :disabled="currentPage === 1">Prev</button>
@@ -48,9 +83,13 @@
 </template>
 
 <script setup>
-import { VCard, VSelect, VIcon, VTooltip } from 'vuetify/components'
+import { VCard, VSelect, VIcon, VTooltip, VMenu } from 'vuetify/components'
 
 const props = defineProps({
+  title: {
+    type: String,
+    default: '',
+  },
   items: {
     type: Array,
     required: true,
@@ -70,7 +109,7 @@ const props = defineProps({
   },
   pageLength: {
     type: Number,
-    default: 10,
+    default: 8,
   },
 })
 
@@ -152,11 +191,19 @@ const computedTooltipLocation = computed(() => {
 <style scoped>
 .data-column {
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0;
   padding-top: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+.column-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #00213c40;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
 }
 .controls {
   display: flex;
@@ -173,7 +220,7 @@ const computedTooltipLocation = computed(() => {
   border: 1px solid #ccc;
 }
 .item-box {
-  margin-bottom: 2px;
+  margin-bottom: 6px;
   background-color: #fff;
   overflow: hidden;
 }
@@ -205,7 +252,6 @@ const computedTooltipLocation = computed(() => {
   display: flex;
   justify-content: space-evenly;
   align-items: flex-end;
-  margin-top: 16px;
   flex-grow: 1;
   padding-bottom: 16px;
 }

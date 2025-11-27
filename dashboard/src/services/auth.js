@@ -34,6 +34,7 @@ export async function logout(email) {
 }
 
 export async function refreshAccessToken() {
+  console.log('Refreshing access token...');
   const refreshToken = localStorage.getItem('refreshToken');
   if (!refreshToken) return false;
   try {

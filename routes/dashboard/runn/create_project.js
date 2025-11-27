@@ -2,8 +2,8 @@
 const { createProject } = require("../../../dispatch/runn/project.js");
 
 const createRunnProject = async (req, res) => {
-  const {name, budget, managerIds} = req.body;
-  await createProject(name, budget, managerIds).then((result) => {
+  const {name, budget, managerIds, client} = req.body;
+  await createProject(name, budget, managerIds, client).then((result) => {
     res.send(result);
   }).catch((error) => {
     console.error("Error in createProject:", error.response);

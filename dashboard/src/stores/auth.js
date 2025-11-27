@@ -16,11 +16,15 @@ export const useAuthStore = defineStore('auth', {
     }
     
     if (token) {
-      const decoded = jwtDecode(token)
-      initState.userEmail = decoded.email || ''
-      initState.userFirstName = decoded.first_name || ''
-      initState.userLastName = decoded.last_name || ''
-      initState.userProfileImage = decoded.profile_image || ''
+      try {
+        const decoded = jwtDecode(token)
+        initState.userEmail = decoded.email || ''
+        initState.userFirstName = decoded.first_name || ''
+        initState.userLastName = decoded.last_name || ''
+        initState.userProfileImage = decoded.profile_image || ''
+      } catch (e) {
+        console.log('[authStore] error decoding token during initialization:', e)
+      }
     }
     return initState
   },
