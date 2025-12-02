@@ -4,6 +4,9 @@ function getChannelIdForRepo(repo) {
   if (getUsergroupRepos('developers').includes(repo)) {
       return process.env.DEV_CHAT_CHANNELID;
   }
+  if (repo == 'DB-CI') {
+      return process.env.DB_CI_CHANNELID;
+  }
   if (getUsergroupRepos('analysts').includes(repo)) {
       return process.env.ANALYST_CHANNELID;
   }

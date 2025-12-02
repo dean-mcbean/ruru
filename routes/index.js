@@ -12,8 +12,15 @@ const { logEngineSuggestion } = require('./slack/message_action/log_engine_sugge
 const sendToResponseUrl = require('../dispatch/slack/send_response');
 const { ensureBasecampToken } = require('../middleware/basecamp');
 const copyTasksToRunn = require('./slack/slash_commands/copy_tasks_to_runn');
+const { recieveDealStageChange } = require('./hubspot/dealstage');
 
 var router = express.Router();
+
+router.get('/', function(req, res) {
+  res.redirect('/dashboard');
+});
+
+router.use('/dash-api', require('./dashboard/index'));
 
 /* POST from git. */
 // eslint-disable-next-line no-unused-vars
@@ -93,17 +100,17 @@ router.post('/slack/', ensureBasecampToken, async (req, res) => {
   // Pass actions to relevant webhook handler
   if (data.type === 'message_action') {
     if (data.callback_id === 'log_bug') {
+      res.sendStatus(200);
       response = await logBug(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_feedback') {
+      res.sendStatus(200);
       response = await logFeedback(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_data_error') {
+      res.sendStatus(200);
       response = await logDataError(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_engine_suggestion') {
+      res.sendStatus(200);
       response = await logEngineSuggestion(data, req.basecampToken);
-      res.status(200);
     }
 
     if (response) {
@@ -123,8 +130,8 @@ router.post('/slack/', ensureBasecampToken, async (req, res) => {
         res.status(200);
       }
     }
+    res.send();
   }
-  res.send();
 });
 
 /* POST from slack. */
@@ -138,6 +145,23 @@ router.post('/pipeline/', async (req, res, next) => {
     });
   
   res.status(200).send();
+});
+
+/* POST from hubspot. */
+// eslint-disable-next-line no-unused-vars
+router.post('/hubspot/', async (req, res, next) => {
+  console.log('Received HubSpot webhook:', req.body); 
+  try { 
+    for (const deal of req.body) {
+      // stage has become "7. Contract Negotiations"
+      if (deal.propertyName == 'dealstage' && deal.propertyValue == '188541341') {
+        recieveDealStageChange(deal);
+      }
+    }
+    res.status(200).send()
+  } catch (e) {
+    console.log(e)
+  }
 });
 
 /* POST from explorer api. */
