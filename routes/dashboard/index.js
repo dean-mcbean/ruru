@@ -13,6 +13,7 @@ const requireDashboardAuth = require('../../middleware/requireDashboardAuth.js')
 const { ensureBasecampToken } = require('../../middleware/basecamp');
 const uploadMarkdown = require('./basecamp/upload-markdown.js');
 const { createBasecampProject } = require('./basecamp/create_project.js');
+const { createBasecampTodolist } = require('./basecamp/create_todolist.js');
 const notifyOnSlack = require('./slack/notifyOnSlack.js');
 const getRunnClients = require('./runn/get_clients.js');
 
@@ -34,6 +35,7 @@ router.post('/runn/projects', requireDashboardAuth, createRunnProject);
 router.get('/hubspot/deals', requireDashboardAuth, getHubspotDeals);
 router.get('/basecamp/projects', requireDashboardAuth, ensureBasecampToken, getBasecampProjects);
 router.post('/basecamp/project', requireDashboardAuth, ensureBasecampToken, createBasecampProject);
+router.post('/basecamp/todolist', requireDashboardAuth, ensureBasecampToken, createBasecampTodolist);
 router.use(uploadMarkdown);
 
 module.exports = router;

@@ -25,20 +25,20 @@
           <template #default="{ item }">
             <div class="project-item-column">
               <div class="project-item-header">
-                <strong><SearchHighlight :text="item.name" :query="searchQuery" /></strong>
+                <a target="_blank" :href="item.app_url"><strong><SearchHighlight :text="item.name" :query="searchQuery" /></strong></a>
                 <VMenu open-on-hover>
                   <template #activator="{ props }">
-                  <VIcon
-                    v-bind="props"
-                    icon="mdi-dots-horizontal"
-                    size="24"
-                    aria-label="More options"
-                    class="project-options-btn"
-                  />
+                    <VIcon
+                      v-bind="props"
+                      icon="mdi-dots-horizontal"
+                      size="24"
+                      aria-label="More options"
+                      class="project-options-btn"
+                    />
                   </template>
                   <VList>
-                    <VListItem @click="console.log(item)" style="cursor: pointer;">
-                      <VListItemTitle>Debug</VListItemTitle>
+                    <VListItem @click="navigator.clipboard.writeText(item.app_url)" style="cursor: pointer;">
+                      <VListItemTitle>Copy Link</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
@@ -78,10 +78,10 @@
                   </template>
                   <VList>
                     <VListItem @click="copyRunnToBasecamp(item)" style="cursor: pointer;">
-                      <VListItemTitle>Copy to Basecamp</VListItemTitle>
+                      <VListItemTitle>Duplicate in Basecamp</VListItemTitle>
                     </VListItem>
-                    <VListItem @click="console.log(item)" style="cursor: pointer;">
-                      <VListItemTitle>Debug</VListItemTitle>
+                    <VListItem @click="navigator.clipboard.writeText(`https://app.runn.io/projects/${item.id}`)" style="cursor: pointer;">
+                      <VListItemTitle>Copy Link</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
@@ -132,7 +132,7 @@
           <template #default="{ item }">
             <div class="project-item-column">
               <div class="project-item-header">
-                <strong><SearchHighlight :text="item.properties.dealname" :query="searchQuery" /></strong>
+                <a target="_blank" :href="item.url"><strong><SearchHighlight :text="item.properties.dealname" :query="searchQuery" /></strong></a>
                 <VMenu open-on-hover>
                   <template #activator="{ props }">
                   <VIcon
@@ -145,10 +145,10 @@
                   </template>
                   <VList>
                     <VListItem @click="copyHubspotToRunn(item)" style="cursor: pointer;">
-                      <VListItemTitle>Copy to Runn</VListItemTitle>
+                      <VListItemTitle>Duplicate in Runn</VListItemTitle>
                     </VListItem>
-                    <VListItem @click="console.log(item)" style="cursor: pointer;">
-                      <VListItemTitle>Debug</VListItemTitle>
+                    <VListItem @click="navigator.clipboard.writeText(item.url)" style="cursor: pointer;">
+                      <VListItemTitle>Copy Link</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
@@ -262,7 +262,7 @@ import DataColumn from '@/components/data/DataColumn.vue'
 import { VIcon, VMenu, 
 VList, VListItem, VListItemTitle, VSnackbar, VDialog, VCard, VCardTitle, VCardText, VCardActions, VBtn, VTextField, VSelect
  } from 'vuetify/components'
-import { createBasecampProject } from '@/services/basecamp/basecamp'
+import { createBasecampProject, createBasecampTodolist } from '@/services/basecamp/basecamp'
 import { createRunnProject } from '@/services/runn/runn'
 import { notifyOnSlack } from '@/services/slack/slack'
 // Modal state and info for copyTo actions
@@ -350,7 +350,8 @@ async function copyRunnToBasecamp(runnProject) {
   const basecampProject = {
     name: runnProject.name,
     description: runnProject.description,
-    subscribers: "Chantelle, Ruru"
+    subscribers: "Chantelle, Ruru",
+    todoList: runnProject.phases && runnProject.phases.length > 0 ? runnProject.phases.length + ' phases' : 'No phases'
   }
   openCopyConfirm(
     'Basecamp',
@@ -371,10 +372,23 @@ async function copyRunnToBasecamp(runnProject) {
         "Adding todolists to project..."
       ]
       const todoSetId = createdProject.data.dock.find(dockItem => dockItem.name === 'todoset').id
-      const todoLists = runnProject.phases.map(phase => ({ name: phase.name,
-        description: `Start: ${formatDate(phase.startDate)} -> End: ${formatDate(phase.endDate)}`
+      const todoLists = runnProject.phases.map(phase => ({ 
+        content: phase.name,
+        starts_on: phase.startDate,
+        due_on: phase.endDate
       }))
       console.log(createdProject, todoLists, todoSetId, 'Template:', selectedBasecampTemplate.value)
+      await createBasecampTodolist({
+        projectId: createdProject.data.id,
+        todolistSetId: todoSetId,
+        name: 'Project Phases',
+        description: 'Imported from Runn project phases',
+        todos: todoLists
+      }).catch(err => {
+        console.error('Error creating Basecamp todolists:', err)
+        snackbarHeader.value = "Error: " + (err.response?.data?.message || err.message || 'Unknown error')
+      })
+      snackbarNotifications.value.push("Added todolists to project.")
       
       const urlToNewProject = createdProject.data.app_url
       notifyOnSlack(`New Basecamp Project made from template "${templateKey}": ${urlToNewProject}`)
@@ -523,6 +537,9 @@ h1 {
   padding: 8px 12px;
   line-height: 1.2;
 }
+.project-item-header a:hover {
+  text-decoration: underline;
+}
 .project-item-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -544,5 +561,8 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.v-list {
+  padding: 0;
 }
 </style>

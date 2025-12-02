@@ -12,6 +12,7 @@ const { logEngineSuggestion } = require('./slack/message_action/log_engine_sugge
 const sendToResponseUrl = require('../dispatch/slack/send_response');
 const { ensureBasecampToken } = require('../middleware/basecamp');
 const copyTasksToRunn = require('./slack/slash_commands/copy_tasks_to_runn');
+const { recieveDealStageChange } = require('./hubspot/dealstage');
 
 var router = express.Router();
 
@@ -154,7 +155,7 @@ router.post('/hubspot/', async (req, res, next) => {
     for (const deal of req.body) {
       // stage has become "7. Contract Negotiations"
       if (deal.propertyName == 'dealstage' && deal.propertyValue == '188541341') {
-        console.log('valid stage change', deal)
+        recieveDealStageChange(deal);
       }
     }
     res.status(200).send()

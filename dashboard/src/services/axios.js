@@ -47,11 +47,10 @@ instance.interceptors.response.use(
           .catch(err => Promise.reject(err));
       }
 
-      originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const newToken = await refreshAccessToken();
+        const newToken = (await refreshAccessToken()).data.accessToken;
         localStorage.setItem('accessToken', newToken);
         instance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
