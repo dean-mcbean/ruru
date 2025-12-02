@@ -100,17 +100,17 @@ router.post('/slack/', ensureBasecampToken, async (req, res) => {
   // Pass actions to relevant webhook handler
   if (data.type === 'message_action') {
     if (data.callback_id === 'log_bug') {
+      res.sendStatus(200);
       response = await logBug(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_feedback') {
+      res.sendStatus(200);
       response = await logFeedback(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_data_error') {
+      res.sendStatus(200);
       response = await logDataError(data, req.basecampToken);
-      res.status(200);
     } else if (data.callback_id === 'log_engine_suggestion') {
+      res.sendStatus(200);
       response = await logEngineSuggestion(data, req.basecampToken);
-      res.status(200);
     }
 
     if (response) {
@@ -130,8 +130,8 @@ router.post('/slack/', ensureBasecampToken, async (req, res) => {
         res.status(200);
       }
     }
+    res.send();
   }
-  res.send();
 });
 
 /* POST from slack. */
