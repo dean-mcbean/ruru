@@ -45,7 +45,7 @@ async function createProject(basecampToken, { name, description, template, subsc
       {
         project: {
           name: `${name}`,
-          description: `${description}`
+          description: `${description}`,
         }
       },
       {
@@ -116,6 +116,26 @@ async function createProject(basecampToken, { name, description, template, subsc
       throw error;
     });
   }
+
+  if (projectId) {
+    await axios.put(
+      `https://3.basecampapi.com/${BASECAMP.ACCOUNT_ID}/projects/${projectId}.json`,
+      {
+        admissions: 'employee'
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${basecampToken}`,
+          'Content-Type': 'application/json; charset=utf-8',
+          'User-Agent': 'Ruru (dean.walker@urbanintelligence.com)'
+        }
+      }
+    ).catch(error => {
+      console.error('Error updating project admissions:', error);
+      throw error;
+    });
+  }
+
 
   return newProject;
 }
