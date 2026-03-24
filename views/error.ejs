@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Error</title>
+  <style>
+    body {
+      background: #1a355b;
+      color: #1a355b;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 60px;
+    }
+    .error-container {
+      background: #fff;
+      border: 1px solid #1a355b;
+      border-radius: 8px;
+      display: inline-block;
+      padding: 40px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .status {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <h1>Oops! Something went wrong.</h1>
+    <div class="status">
+      <% if (typeof status !== 'undefined') { %>
+        Error <%= status %>
+      <% } else { %>
+        Error
+      <% } %>
+    </div>
+    <p>
+      <% if (typeof message !== 'undefined') { %>
+        <%= message %>
+      <% } else { %>
+        An unexpected error has occurred.
+      <% } %>
+    </p>
+  </div>
+</body>
+</html>
